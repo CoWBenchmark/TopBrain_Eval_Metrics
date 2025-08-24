@@ -1,0 +1,34 @@
+[project]
+name = "topbrain25_eval"
+version = "0.0.1"
+description = "Evaluations for TopBrain 2025 MICCAI Challenge"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "evalutils==0.4.2",
+    "nibabel==5.1.0",
+    "numpy==1.25.2",
+    "pandas==2.0.3",
+    "scikit-image==0.21.0",
+    "SimpleITK==2.2.1",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "ruff"]
+
+[project.urls]
+Repository = "https://github.com/CoWBenchmark/TopBrain_Eval_Metrics"
+Issues = "https://github.com/CoWBenchmark/TopBrain_Eval_Metrics/issues"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+# specify the packages to be included manually
+packages = [
+    "topbrain25_eval",
+    "topbrain25_eval.aggregate",
+    "topbrain25_eval.metrics",
+    "topbrain25_eval.utils"
+]
