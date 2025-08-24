@@ -322,11 +322,11 @@ class MySegmentationEvaluation(ClassificationEvaluation):
 
         # work with self._case_results
         # to post-aggregate detection_dict
-        # to get the f1-average and variant-average balanced accuracy
+        # to get the f1-average
         # add the post-aggregate straight to the
         # self._aggregate_results dict
 
-        # metric-5 Average F1 score
+        # metric-6 Average F1 score
         # detection_dict is under the column `all_detection_dicts`
         dect_avg = aggregate_all_detection_dicts(
             self.track, self._case_results["all_detection_dicts"]

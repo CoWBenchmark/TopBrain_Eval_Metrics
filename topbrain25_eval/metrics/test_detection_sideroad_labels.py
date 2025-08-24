@@ -15,7 +15,7 @@ from topbrain25_eval.utils.utils_nii_mha_sitk import load_image_and_array_as_uin
 
 ##############################################################
 #   __________________________________________
-# < 5. Tests for detection of side-road vessel >
+# < 6. Tests for detection of side-road vessel >
 #   ------------------------------------------
 #          \   ^__^
 #           \  (oo)\_______
