@@ -153,6 +153,34 @@ def test_get_neighbor_per_mask_topcow_mr_023():
     os.remove(save_json_path)
 
 
+def test_get_label_neighbors_4corners():
+    # NOTE: even if no neighbors, value must be an explicit set()
+    # Example segmentation mask array with 4 corner blobs
+    # 0 - background, 1, 2, 3, 4 - labels
+    mask_arr = np.array(
+        [
+            [1, 0, 2],
+            [0, 0, 0],
+            [4, 0, 3],
+        ],
+        dtype=np.uint8,
+    )
+    # convert to 3D
+    mask_arr = np.expand_dims(mask_arr, axis=-1)
+
+    mask_img = sitk.GetImageFromArray(mask_arr)
+
+    # output dict to rm later
+    save_json_path = TESTDIR / "test_get_label_neighbors_4corners.json"
+
+    serializable_dict = get_neighbor_per_mask(mask_img, save_json_path)
+
+    assert serializable_dict == {"1": [], "2": [], "3": [], "4": []}
+
+    # clean up
+    os.remove(save_json_path)
+
+
 def test_get_label_neighbors_simple_np_mask():
     # Example segmentation mask array
     # 0 - background, 1, 2, 3 - labels
@@ -215,7 +243,7 @@ def test_get_label_neighbors_complex_np_mask():
         # label-1 neighbors 4
         "1": [4],
         # label-2 neighbors none
-        # 2: set(),
+        "2": [],
         # label-3 neighbors 6
         "3": [6],
         # label-4 neighbors 1, 5

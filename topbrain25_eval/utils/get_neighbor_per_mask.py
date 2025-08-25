@@ -45,8 +45,13 @@ def get_neighbor_per_mask(mask_img: sitk.Image, save_json_path) -> dict:
 
         # Add these pairs to the neighbors map
         for lab, neigh_lab in zip(boundary_labels, neighbor_labels):
+            lab, neigh_lab = int(lab), int(neigh_lab)
+            # print(f"lab, neigh_lab = {lab, neigh_lab}")
+            # NOTE: even if no neighbors, value must be an explicit set()
+            if lab not in neighbors_dict.keys():
+                neighbors_dict[lab] = set()
+                # print(f"added {lab}")
             if neigh_lab != 0:  # Exclude background
-                lab, neigh_lab = int(lab), int(neigh_lab)
                 neighbors_dict[lab].add(neigh_lab)
                 neighbors_dict[neigh_lab].add(lab)  # Neighbors are symmetric
 

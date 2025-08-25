@@ -122,20 +122,20 @@ Simply invoke the tests by `pytest .`:
 $ pytest .
 
 topbrain25_eval/aggregate/test_aggregate_all_detection_dicts.py ....                                                                                 [  4%]
-topbrain25_eval/metrics/test_cls_avg_b0.py ...............                                                                                           [ 20%]
-topbrain25_eval/metrics/test_cls_avg_clDice.py .....                                                                                                 [ 25%]
-topbrain25_eval/metrics/test_cls_avg_dice.py .............                                                                                           [ 38%]
-topbrain25_eval/metrics/test_cls_avg_hd95.py .............                                                                                           [ 52%]
-topbrain25_eval/metrics/test_cls_avg_invalid_neighbors.py ......                                                                                     [ 58%]
+topbrain25_eval/metrics/test_cls_avg_b0.py ...............                                                                                           [ 19%]
+topbrain25_eval/metrics/test_cls_avg_clDice.py .....                                                                                                 [ 24%]
+topbrain25_eval/metrics/test_cls_avg_dice.py .............                                                                                           [ 37%]
+topbrain25_eval/metrics/test_cls_avg_hd95.py .............                                                                                           [ 51%]
+topbrain25_eval/metrics/test_cls_avg_invalid_neighbors.py ........                                                                                   [ 59%]
 topbrain25_eval/metrics/test_detection_sideroad_labels.py ..........                                                                                 [ 69%]
-topbrain25_eval/metrics/test_generate_cls_avg_dict.py ..........                                                                                     [ 80%]
-topbrain25_eval/metrics/test_valid_neighbors.py ..                                                                                                   [ 82%]
-topbrain25_eval/test_constants.py .                                                                                                                  [ 83%]
-topbrain25_eval/test_evaluation_task_1_seg.py ..                                                                                                     [ 85%]
-topbrain25_eval/test_evaluation_task_1_seg_2.py ..                                                                                                   [ 87%]
-topbrain25_eval/test_score_case_task_1_seg.py ..                                                                                                     [ 89%]
-topbrain25_eval/utils/test_get_neighbor_per_mask.py ......                                                                                           [ 95%]
+topbrain25_eval/metrics/test_generate_cls_avg_dict.py ..........                                                                                     [ 79%]
+topbrain25_eval/metrics/test_valid_neighbors.py ..                                                                                                   [ 81%]
+topbrain25_eval/test_constants.py .                                                                                                                  [ 82%]
+topbrain25_eval/test_evaluation_task_1_seg.py ..                                                                                                     [ 84%]
+topbrain25_eval/test_evaluation_task_1_seg_2.py ..                                                                                                   [ 86%]
+topbrain25_eval/test_score_case_task_1_seg.py ..                                                                                                     [ 88%]
+topbrain25_eval/utils/test_get_neighbor_per_mask.py .......                                                                                          [ 95%]
 topbrain25_eval/utils/test_utils_mask.py ....                                                                                                        [100%]
 
-==================================================================== 95 passed in 3.70s ====================================================================
+==================================================================== 98 passed in 3.17s ====================================================================
 ```

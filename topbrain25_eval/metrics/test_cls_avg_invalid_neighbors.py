@@ -138,6 +138,47 @@ def test_invalid_neighbors_all_classes_absent_pred():
     }
 
 
+def test_invalid_neighbors_all_classes_isolated_blob():
+    """
+    test for when some classes have no neighbors,
+    should proceed with the neigbor check without KeyError: 'X'!
+    """
+    track = TRACK.CT
+
+    image2 = sitk.Image([3, 3, 3], sitk.sitkUInt8)
+    # Assign label values to corner voxels
+    image2[0, 0, 0] = 1  # Corner 1
+    image2[0, 0, 2] = 40  # Corner 2
+
+    # saved pred_neighbors.json is cannot be {}!
+    invalid_neighbors_dict = invalid_neighbors_all_classes(
+        track=track, gt=image2, pred=image2
+    )
+    assert invalid_neighbors_dict == {
+        "1": {"label": "BA", "NbErr": 0},
+        "40": {"label": "SSS", "NbErr": 0},
+        "ClsAvgNbErr": {"label": "ClsAvgNbErr", "NbErr": 0},
+    }
+
+
+def test_invalid_neighbors_all_classes_twoIslands():
+    """
+    reuse test_twoIslands() from test_cls_avg_b0.py
+    """
+    pred_path = TESTDIR_3D / "shape_3x4x2_3D_twoIslands.nii.gz"
+
+    pred_img, _ = load_image_and_array_as_uint8(pred_path)
+    track = TRACK.MR
+
+    invalid_neighbors_dict = invalid_neighbors_all_classes(
+        track=track, gt=pred_img, pred=pred_img
+    )
+    assert invalid_neighbors_dict == {
+        "1": {"label": "BA", "NbErr": 0},
+        "ClsAvgNbErr": {"label": "ClsAvgNbErr", "NbErr": 0},
+    }
+
+
 def test_invalid_neighbors_all_classes_detection_label8910():
     """
     re-use test cases from test_detection_sideroad_labels_ThresholdIoU()
