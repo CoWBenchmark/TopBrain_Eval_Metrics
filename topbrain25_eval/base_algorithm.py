@@ -94,12 +94,17 @@ class MySegmentationEvaluation(ClassificationEvaluation):
         print(f"[path] ground_truth_path={ground_truth_path}")
         print(f"[path] output_file={output_file}")
 
+        for _ in DisplayablePath.make_tree(predictions_path):
+            print(_.displayable())
+        for _ in DisplayablePath.make_tree(ground_truth_path):
+            print(_.displayable())
+
         # do not proceed if input|predictions|ground-truth folders are empty
         num_input_pred = len(
             [
                 str(x)
                 for x in predictions_path.rglob("*")
-                if x.is_file() and x.name != "predictions.json"
+                if x.is_file() and x.name not in ("predictions.json", "inputs.json")
             ]
         )
 
@@ -115,11 +120,6 @@ class MySegmentationEvaluation(ClassificationEvaluation):
 
         # early abort if num pred != gt files
         assert num_ground_truth == num_input_pred, "unequal gt & pred"
-
-        for _ in DisplayablePath.make_tree(predictions_path):
-            print(_.displayable())
-        for _ in DisplayablePath.make_tree(ground_truth_path):
-            print(_.displayable())
 
         # slug for input interface (for gc docker)
         self.slug_input = f"head-{self.track.value}-angiography"
@@ -356,8 +356,10 @@ class MySegmentationEvaluation(ClassificationEvaluation):
             # to prevent sensitive info from being leaked
             print("in docker, thus remove case key...")
             del final_metrics["case"]
-
-        pprint.pprint(final_metrics, sort_dicts=False)
+        else:
+            # suppress the print of final_metrics in docker env
+            # due to stdout truncation by GC
+            pprint.pprint(final_metrics, sort_dicts=False)
 
         with open(self._output_file, "w") as f:
             f.write(json.dumps(final_metrics, indent=2, sort_keys=True))

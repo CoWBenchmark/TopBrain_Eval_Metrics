@@ -6,11 +6,13 @@ Neighborhood is defined by adjacency or "touching"
 """
 
 import json
-import pprint
+
+# import pprint
 from pathlib import Path
 
 import SimpleITK as sitk
 from topbrain25_eval.constants import TRACK
+from topbrain25_eval.for_gc_docker import is_docker
 from topbrain25_eval.metrics.generate_cls_avg_dict import generate_cls_avg_dict
 from topbrain25_eval.utils.get_neighbor_per_mask import get_neighbor_per_mask
 
@@ -18,7 +20,11 @@ from topbrain25_eval.utils.get_neighbor_per_mask import get_neighbor_per_mask
 # _TEMP_PRED_NEIGHBOR_JSON_PATH = None
 
 # Get the current script directory
-script_dir = Path(__file__).parent
+if is_docker():
+    # in docker, need to read the files outside of module environment
+    script_dir = Path("/opt/app/topbrain25_eval/metrics")
+else:
+    script_dir = Path(__file__).parent
 print(f"script_dir = {script_dir}")
 
 
@@ -32,7 +38,7 @@ def invalid_neighbors_single_label(
     """
     # ignore the gt and pred image
     # read from the valid neighbor json and directly diff the number
-    print(f"\n--> invalid_neighbors_single_label() for label-{label}")
+    # print(f"\n--> invalid_neighbors_single_label() for label-{label}")
 
     # read the gt neighbor dict
     with open(gt_neighbor_json_path) as f:
@@ -44,14 +50,14 @@ def invalid_neighbors_single_label(
     # get the list of neighbors for this label
     gt_neighbors = gt_neighbors_dict[str(label)]
     pred_neighbors = pred_neighbors_dict[str(label)]
-    print(f"gt_neighbors = {gt_neighbors}")
-    print(f"pred_neighbors = {pred_neighbors}")
+    # print(f"gt_neighbors = {gt_neighbors}")
+    # print(f"pred_neighbors = {pred_neighbors}")
 
     unique_to_pred = set(pred_neighbors) - set(gt_neighbors)
-    print(f"Elements only in pred: {unique_to_pred}")
+    # print(f"Elements only in pred: {unique_to_pred}")
 
     num_invalid_neighbors = len(unique_to_pred)
-    print(f"num_invalid_neighbors = {num_invalid_neighbors}")
+    # print(f"num_invalid_neighbors = {num_invalid_neighbors}")
     return num_invalid_neighbors
 
 
@@ -88,6 +94,6 @@ def invalid_neighbors_all_classes(
         metric_func=invalid_neighbors_single_label,
         binary_merge=False,  # skip binary merged metric
     )
-    print("\ninvalid_neighbors_all_classes() =>")
-    pprint.pprint(invalid_neighbors_dict, sort_dicts=False)
+    # print("\ninvalid_neighbors_all_classes() =>")
+    # pprint.pprint(invalid_neighbors_dict, sort_dicts=False)
     return invalid_neighbors_dict

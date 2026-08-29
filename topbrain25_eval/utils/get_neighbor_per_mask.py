@@ -60,15 +60,15 @@ def get_neighbor_per_mask(mask_img: sitk.Image, save_json_path) -> dict:
     str_sort_dict = {str(k): sorted(v) for k, v in dict(neighbors_dict).items()}
     serializable_dict = sort_dict_by_numeric_keys(str_sort_dict)
 
-    print("final serializable neighbors_dict =")
-    for k, v in serializable_dict.items():
-        print(f"{k}: {v}")
+    # print("final serializable neighbors_dict =")
+    # for k, v in serializable_dict.items():
+    #     print(f"{k}: {v}")
 
     # save the neighbors_dict as a json
     with open(save_json_path, "w") as f:
         f.write(json.dumps((serializable_dict), indent=4))
 
-    print(f"{save_json_path} SAVED!\n")
+    # print(f"{save_json_path} SAVED!\n")
 
     return serializable_dict
 

@@ -2,7 +2,7 @@
 Class-average Dice similarity coefficient
 """
 
-import pprint
+# import pprint
 
 import numpy as np
 import SimpleITK as sitk
@@ -24,7 +24,7 @@ def dice_coefficient_single_label(
     NOTE: two sitk.Images with DIFFERENT voxel spacings
     can still be calculated for overlap measures...(?!)
     """
-    print(f"\nfor label-{label}")
+    # print(f"\nfor label-{label}")
 
     # Check if label exists for both gt and pred
     # If not, DSC is automatically set to 0 due to FP or FN
@@ -33,7 +33,7 @@ def dice_coefficient_single_label(
 
     # check if either gt or pred label_arr is all zero
     if (not np.any(gt_label_arr)) or (not np.any(pred_label_arr)):
-        print(f"[!!Warning] label-{label} empty for gt or pred")
+        # print(f"[!!Warning] label-{label} empty for gt or pred")
         return 0
 
     # NOTE: sometimes there are tiny differences in image Direction:
@@ -47,7 +47,7 @@ def dice_coefficient_single_label(
     overlap_measures.SetNumberOfThreads(1)
     overlap_measures.Execute(gt, pred)
     dice_score = overlap_measures.GetDiceCoefficient(label)
-    print("dice_score = ", dice_score)
+    # print("dice_score = ", dice_score)
     return dice_score
 
 
@@ -65,6 +65,6 @@ def dice_coefficient_all_classes(
         metric_keys=["Dice"],
         metric_func=dice_coefficient_single_label,
     )
-    print("\ndice_coefficient_all_classes() =>")
-    pprint.pprint(dice_dict, sort_dicts=False)
+    # print("\ndice_coefficient_all_classes() =>")
+    # pprint.pprint(dice_dict, sort_dicts=False)
     return dice_dict

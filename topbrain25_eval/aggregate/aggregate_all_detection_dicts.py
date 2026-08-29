@@ -9,7 +9,7 @@ to get the Average F1 score
 for detection of the "Side road" vessel components
 """
 
-import pprint
+# import pprint
 
 import numpy as np
 from pandas import Series
@@ -23,7 +23,7 @@ from topbrain25_eval.constants import (
 
 
 def aggregate_all_detection_dicts(track: TRACK, all_detection_dicts: Series) -> dict:
-    print("\n[aggregate] aggregate_all_detection_dicts()\n")
+    # print("\n[aggregate] aggregate_all_detection_dicts()\n")
 
     if track == TRACK.CT:
         component_labels = SIDEROAD_COMPONENT_LABELS_CT
@@ -57,8 +57,8 @@ def count_sideroad_detection(
     # be the same as the number of items in a detection_dict
     num_component_labels = len(component_labels)
     num_detection_dict_labels = len(all_detection_dicts.values[0])
-    print(f"num_component_labels = {num_component_labels}")
-    print(f"num_detection_dict_labels = {num_detection_dict_labels}")
+    # print(f"num_component_labels = {num_component_labels}")
+    # print(f"num_detection_dict_labels = {num_detection_dict_labels}")
 
     assert num_component_labels == num_detection_dict_labels, (
         "unmatched num of labels for detection metric"
@@ -83,8 +83,8 @@ def count_sideroad_detection(
         for label, value in detection_dict.items():
             detection_counts[label][value["Detection"]] += 1
 
-    print("\ncount_sideroad_detection =>")
-    pprint.pprint(detection_counts, sort_dicts=False)
+    # print("\ncount_sideroad_detection =>")
+    # pprint.pprint(detection_counts, sort_dicts=False)
 
     return detection_counts
 
@@ -136,7 +136,7 @@ def get_dect_avg(
 
     # get the detection_stats based on label
     for label, stats in detection_counts.items():
-        print(f"\nfor label-{label} ({label_map[str(label)]})")
+        # print(f"\nfor label-{label} ({label_map[str(label)]})")
         tp = stats["TP"]
         fp = stats["FP"]
         fn = stats["FN"]
@@ -150,7 +150,7 @@ def get_dect_avg(
         else:
             precision = tp / (tp + fp)
 
-        print(f"precision = {precision}")
+        # print(f"precision = {precision}")
         list_precision.append(precision)
         dect_avg[label]["precision"] = precision
 
@@ -160,7 +160,7 @@ def get_dect_avg(
         else:
             recall = tp / (tp + fn)
 
-        print(f"recall = {recall}")
+        # print(f"recall = {recall}")
         list_recall.append(recall)
         dect_avg[label]["recall"] = recall
 
@@ -170,31 +170,31 @@ def get_dect_avg(
         else:
             f1_score = 2 * tp / ((2 * tp) + fp + fn)
 
-        print(f"f1_score = {f1_score}")
+        # print(f"f1_score = {f1_score}")
         list_f1.append(f1_score)
         dect_avg[label]["f1_score"] = f1_score
 
     # end of for loop
 
-    print(f"\nlist_precision = {list_precision}")
+    # print(f"\nlist_precision = {list_precision}")
     dect_avg["precision"] = {
         "mean": np.mean(list_precision),
         "std": np.std(list_precision),
     }
 
-    print(f"\nlist_recall = {list_recall}")
+    # print(f"\nlist_recall = {list_recall}")
     dect_avg["recall"] = {
         "mean": np.mean(list_recall),
         "std": np.std(list_recall),
     }
 
-    print(f"\nlist_f1 = {list_f1}")
+    # print(f"\nlist_f1 = {list_f1}")
     dect_avg["f1_score"] = {
         "mean": np.mean(list_f1),
         "std": np.std(list_f1),
     }
 
-    print("\nget_dect_avg =>")
-    pprint.pprint(dect_avg, sort_dicts=False)
+    # print("\nget_dect_avg =>")
+    # pprint.pprint(dect_avg, sort_dicts=False)
 
     return dect_avg

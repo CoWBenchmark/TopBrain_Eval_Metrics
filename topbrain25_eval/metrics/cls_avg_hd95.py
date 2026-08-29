@@ -2,7 +2,7 @@
 Class-average Hausdorff Distance 95% Percentile (HD95)
 """
 
-import pprint
+# import pprint
 
 import numpy as np
 import SimpleITK as sitk
@@ -31,7 +31,7 @@ def hd95_single_label(*, gt: sitk.Image, pred: sitk.Image, label: int) -> list[f
         Common Limitations of Image Processing Metrics: A Picture Story
 
     NOTE: in case of missing values (FP or FN), set the HD95
-    to be roughly the maximum distance in ROI = 90 mm (HD95_UPPER_BOUND)
+    to be roughly the maximum distance in ROI = <HD95_UPPER_BOUND> mm
 
     Parameters
     ----------
@@ -66,7 +66,7 @@ def hd95_single_label(*, gt: sitk.Image, pred: sitk.Image, label: int) -> list[f
         ToothFairy1 Challenge:
             https://github.com/AImageLab-zip/ToothFairy/blob/main/ToothFairy/evaluation/evaluation.py
     """
-    print(f"\n--> hd95_single_label(label-{label})\n")
+    # print(f"\n--> hd95_single_label(label-{label})\n")
 
     # gt and pred should have the same shape
     assert gt.GetSize() == pred.GetSize(), "gt pred not matching shapes!"
@@ -101,7 +101,7 @@ def hd95_single_label(*, gt: sitk.Image, pred: sitk.Image, label: int) -> list[f
 
     # check if either gt or pred label_arr is all zero
     if (not np.any(gt_label_arr)) or (not np.any(pred_label_arr)):
-        print(f"[!!Warning] label-{label} empty for gt or pred")
+        # print(f"[!!Warning] label-{label} empty for gt or pred")
         return [HD95_UPPER_BOUND, HD95_UPPER_BOUND]
 
     ##################################################################
@@ -161,7 +161,7 @@ def hd95_single_label(*, gt: sitk.Image, pred: sitk.Image, label: int) -> list[f
     # print("d_95_pred2ref = ", d_95_pred2ref)
 
     hd95_score = max(d_95_ref2pred, d_95_pred2ref)
-    print("hd95_score = ", hd95_score)
+    # print("hd95_score = ", hd95_score)
 
     # also keep track of HD max
     d_100_ref2pred = np.percentile(ref2pred_distances, 100)
@@ -169,7 +169,7 @@ def hd95_single_label(*, gt: sitk.Image, pred: sitk.Image, label: int) -> list[f
     d_100_pred2ref = np.percentile(pred2ref_distances, 100)
     # print("d_100_pred2ref = ", d_100_pred2ref)
     hd100_score = max(d_100_ref2pred, d_100_pred2ref)
-    print("hd100_score = ", hd100_score)
+    # print("hd100_score = ", hd100_score)
 
     return [hd95_score, hd100_score]
 
@@ -243,6 +243,6 @@ def hd95_all_classes(*, track: TRACK, gt: sitk.Image, pred: sitk.Image) -> dict:
         metric_keys=["HD95", "HD"],
         metric_func=hd95_single_label,
     )
-    print("\nhd95_all_classes() =>")
-    pprint.pprint(hd_dict, sort_dicts=False)
+    # print("\nhd95_all_classes() =>")
+    # pprint.pprint(hd_dict, sort_dicts=False)
     return hd_dict

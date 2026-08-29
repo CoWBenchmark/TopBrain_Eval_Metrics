@@ -3,7 +3,7 @@ for "side road" components average F1 score
 (F1 calculated during aggregate stage)
 """
 
-import pprint
+# import pprint
 
 import numpy as np
 import SimpleITK as sitk
@@ -31,7 +31,7 @@ def iou_single_label(*, gt: sitk.Image, pred: sitk.Image, label: int) -> float:
     NOTE: two sitk.Images with DIFFERENT voxel spacings
     can still be calculated for overlap measures...(?!)
     """
-    print(f"\n\tfor label-{label}")
+    # print(f"\n\tfor label-{label}")
 
     # Check if label exists for both gt and pred
     # If not, IoU is automatically set to 0 due to FP or FN
@@ -40,7 +40,7 @@ def iou_single_label(*, gt: sitk.Image, pred: sitk.Image, label: int) -> float:
 
     # check if either gt or pred label_arr is all zero
     if (not np.any(gt_label_arr)) or (not np.any(pred_label_arr)):
-        print(f"[!!Warning] label-{label} empty for gt or pred")
+        # print(f"[!!Warning] label-{label} empty for gt or pred")
         return 0
 
     # NOTE: sometimes there are tiny differences in image Direction:
@@ -55,7 +55,7 @@ def iou_single_label(*, gt: sitk.Image, pred: sitk.Image, label: int) -> float:
     overlap_measures.Execute(gt, pred)
     # Jaccard Coefficient is IoU
     iou_score = overlap_measures.GetJaccardCoefficient(label)
-    print("\tiou_score = ", iou_score)
+    # print("\tiou_score = ", iou_score)
     return iou_score
 
 
@@ -85,7 +85,7 @@ def detection_single_label(*, gt: sitk.Image, pred: sitk.Image, label: int) -> s
 
     # check if label is present in GT
     if label in gt_labels:
-        print("\tlabel is present in GT")
+        # print("\tlabel is present in GT")
 
         # now decide between TP and FN based on IoU
         iou_score = iou_single_label(gt=gt, pred=pred, label=label)
@@ -99,21 +99,21 @@ def detection_single_label(*, gt: sitk.Image, pred: sitk.Image, label: int) -> s
             # (label is present in GT) ^ (IoU < Threshold)
             detection = DETECTION.FN.value
     else:
-        print("\tlabel is absent in GT")
+        # print("\tlabel is absent in GT")
 
         # now decide between FP and TN based on pred_labels
         if label in pred_labels:
-            print("\tlabel is present in Pred")
+            # print("\tlabel is present in Pred")
             # FP (false positive):
             # (label is absent in GT) ^ (present in Pred)
             detection = DETECTION.FP.value
         else:
-            print("\tlabel is absent in Pred")
+            # print("\tlabel is absent in Pred")
             # TN (true negative):
             # (label is absent in GT) ^ (absent in Pred)
             detection = DETECTION.TN.value
 
-    print(f"\tdetection = {detection}")
+    # print(f"\tdetection = {detection}")
 
     return detection
 
@@ -138,7 +138,7 @@ def detection_sideroad_labels(
             ...
         }
     """
-    print("\nDetection of Side Road Vessel Labels >>>")
+    # print("\nDetection of Side Road Vessel Labels >>>")
 
     if track == TRACK.CT:
         component_labels = SIDEROAD_COMPONENT_LABELS_CT
@@ -157,7 +157,7 @@ def detection_sideroad_labels(
 
     # irregardless of presence, go through each side road vessel label
     for label in component_labels:
-        print(f"\nSide road vessel label-{label}\n")
+        # print(f"\nSide road vessel label-{label}\n")
 
         detection = detection_single_label(gt=gt, pred=pred, label=label)
 
@@ -167,6 +167,6 @@ def detection_sideroad_labels(
             "Detection": detection,
         }
 
-    print("\ndetection_sideroad_labels() =>")
-    pprint.pprint(detection_dict, sort_dicts=False)
+    # print("\ndetection_sideroad_labels() =>")
+    # pprint.pprint(detection_dict, sort_dicts=False)
     return detection_dict

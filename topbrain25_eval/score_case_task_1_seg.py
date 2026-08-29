@@ -1,3 +1,5 @@
+import time
+
 import SimpleITK as sitk
 
 from topbrain25_eval.constants import TRACK
@@ -10,6 +12,7 @@ from topbrain25_eval.metrics.cls_avg_invalid_neighbors import (
 )
 from topbrain25_eval.metrics.detection_sideroad_labels import detection_sideroad_labels
 from topbrain25_eval.metrics.generate_cls_avg_dict import update_metrics_dict
+from topbrain25_eval.utils.log_timestamp import log_timestamp
 
 
 def score_case_task_1_seg(
@@ -35,6 +38,8 @@ def score_case_task_1_seg(
 
     # Score the case
 
+    timestamp = time.time()
+
     # (1) add Dice for each class
     dice_dict = dice_coefficient_all_classes(track=track, gt=gt, pred=pred)
     for key in dice_dict:
@@ -45,6 +50,8 @@ def score_case_task_1_seg(
             metric_name="Dice",
         )
 
+    timestamp = log_timestamp(timestamp, "Dice")
+
     # (2) add clDice for each class
     clDice_dict = clDice_all_classes(track=track, gt=gt, pred=pred)
     for key in clDice_dict:
@@ -54,6 +61,8 @@ def score_case_task_1_seg(
             key=key,
             metric_name="clDice",
         )
+
+    timestamp = log_timestamp(timestamp, "clDice")
 
     # (3) add Betti0 number error for each class
     betti_num_err_dict = betti_number_error_all_classes(track=track, gt=gt, pred=pred)
@@ -66,6 +75,8 @@ def score_case_task_1_seg(
             key=key,
             metric_name="B0err",
         )
+
+    timestamp = log_timestamp(timestamp, "B0err")
 
     # (4) add HD95 and HD for each class
     hd_dict = hd95_all_classes(track=track, gt=gt, pred=pred)
@@ -104,6 +115,8 @@ def score_case_task_1_seg(
                 metric_name="HD95",
             )
 
+    timestamp = log_timestamp(timestamp, "HD95")
+
     # (5) add invalid neighbor error for each class
     invalid_neighbors_dict = invalid_neighbors_all_classes(
         track=track, gt=gt, pred=pred
@@ -116,9 +129,13 @@ def score_case_task_1_seg(
             metric_name="NbErr",
         )
 
+    timestamp = log_timestamp(timestamp, "NbErr")
+
     # (6) add side-road vessel detections
     # each case will have its own detection_dict
     # altogether will be a column of detection_dicts
     # thus name the column as `all_detection_dicts`
     detection_dict = detection_sideroad_labels(track=track, gt=gt, pred=pred)
     metrics_dict["all_detection_dicts"] = detection_dict
+
+    timestamp = log_timestamp(timestamp, "f1 sideroad")

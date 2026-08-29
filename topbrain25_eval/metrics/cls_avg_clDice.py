@@ -2,7 +2,7 @@
 Class-average centerline Dice (clDice)
 """
 
-import pprint
+# import pprint
 
 import numpy as np
 import SimpleITK as sitk
@@ -66,7 +66,7 @@ def clDice_single_label(*, gt: sitk.Image, pred: sitk.Image, label: int) -> floa
     """
     wrapper for clDice() similar to b0/dice/hd95_single_label()
     """
-    print(f"\nfor label-{label}")
+    # print(f"\nfor label-{label}")
 
     # NOTE: SimpleITK npy axis ordering is (z,y,x)!
     # reorder from (z,y,x) to (x,y,z)
@@ -81,7 +81,7 @@ def clDice_single_label(*, gt: sitk.Image, pred: sitk.Image, label: int) -> floa
     # Check if label exists for both gt and pred
     # If not, clDice is automatically set to 0 due to FP or FN
     if (not np.any(gt_label_arr)) or (not np.any(pred_label_arr)):
-        print(f"[!!Warning] label-{label} empty for gt or pred")
+        # print(f"[!!Warning] label-{label} empty for gt or pred")
         return 0
     else:
         return clDice(v_p_pred=pred_label_arr, v_l_gt=gt_label_arr)
@@ -99,6 +99,6 @@ def clDice_all_classes(*, track: TRACK, gt: sitk.Image, pred: sitk.Image) -> dic
         metric_keys=["clDice"],
         metric_func=clDice_single_label,
     )
-    print("\nclDice_all_classes() =>")
-    pprint.pprint(clDice_dict, sort_dicts=False)
+    # print("\nclDice_all_classes() =>")
+    # pprint.pprint(clDice_dict, sort_dicts=False)
     return clDice_dict
