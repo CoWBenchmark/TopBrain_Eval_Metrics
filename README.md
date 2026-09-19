@@ -74,7 +74,7 @@ The accepted file formats for ground-truth and predictions are:
 
 In [`topbrain25_eval/metrics/`](./topbrain25_eval/metrics/), you will find our implementations for evaluating the submitted segmentation predictions.
 
-Six evaluation metrics with equal weights for head-angio multiclass (TopBrain anatomical vessels) segmentation task:
+Seven categories of evaluation metrics, in total 12 metrics with equal weights, for the whole brain anatomical vessel segmentation task:
 
 1. Class-average Dice similarity coefficient:
     * [`cls_avg_dice.py`](./topbrain25_eval/metrics/cls_avg_dice.py)
@@ -89,7 +89,7 @@ Six evaluation metrics with equal weights for head-angio multiclass (TopBrain an
 6. Average F1 score (harmonic mean of the precision and recall) for detection of the "side road" vessels:
     * [`detection_sideroad_labels.py`](./topbrain25_eval/metrics/detection_sideroad_labels.py)
     * [`aggregate_all_detection_dicts.py`](./topbrain25_eval/aggregate/aggregate_all_detection_dicts.py)
-7. Contamination metrics:
+7. Contamination metrics (six metrics):
     * [`contamination_ratio_and_num_src.py`](./topbrain25_eval/metrics/contamination_ratio_and_num_src.py), which computes:
         - Class-average foreground contamination (FGC) ratio
         - Class-average number of FGC sources
