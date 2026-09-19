@@ -7,7 +7,6 @@ Class-average 0-th Betti number error
 import numpy as np
 import SimpleITK as sitk
 from skimage import measure
-from topbrain25_eval.constants import TRACK
 from topbrain25_eval.metrics.generate_cls_avg_dict import generate_cls_avg_dict
 from topbrain25_eval.utils.utils_mask import arr_is_binary
 
@@ -114,15 +113,12 @@ def betti_number_error_single_label(
     return Betti_0_error
 
 
-def betti_number_error_all_classes(
-    *, track: TRACK, gt: sitk.Image, pred: sitk.Image
-) -> dict:
+def betti_number_error_all_classes(*, gt: sitk.Image, pred: sitk.Image) -> dict:
     """
     use the dict generator from generate_cls_avg_dict
     with betti_number_error_single_label() as metric_func
     """
     betti_num_err_dict = generate_cls_avg_dict(
-        track=track,
         gt=gt,
         pred=pred,
         metric_keys=["B0err"],

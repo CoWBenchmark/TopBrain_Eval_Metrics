@@ -5,13 +5,13 @@ run the tests with pytest
 from pathlib import Path
 
 import numpy as np
+import pytest
 import SimpleITK as sitk
 from cls_avg_b0 import (
     betti_number_error_all_classes,
     betti_number_error_single_label,
     connected_components,
 )
-from topbrain25_eval.constants import TRACK
 from topbrain25_eval.utils.utils_nii_mha_sitk import load_image_and_array_as_uint8
 
 ##############################################################
@@ -185,11 +185,11 @@ def test_cls_avg_b0_RGB():
     gt_img, _ = load_image_and_array_as_uint8(gt_path)
     pred_img, _ = load_image_and_array_as_uint8(pred_path)
 
-    assert betti_number_error_all_classes(track=TRACK.CT, gt=gt_img, pred=pred_img) == {
+    assert betti_number_error_all_classes(gt=gt_img, pred=pred_img) == {
         "1": {"label": "BA", "B0err": 0},
         "2": {"label": "R-P1P2", "B0err": 1},
         "3": {"label": "L-P1P2", "B0err": 0},
-        "4": {"label": "R-ICA", "B0err": 1},
+        "4": {"label": "R-ICA-C6-C7", "B0err": 1},
         "ClsAvgB0err": {"label": "ClsAvgB0err", "B0err": 0.5},
         "MergedBin": {"label": "MergedBin", "B0err": 2},
     }
@@ -206,7 +206,7 @@ def test_singleBlob_noBorder_betti_num_err_dict():
     pred_img, _ = load_image_and_array_as_uint8(pred_path)
 
     # label-1 for multiclass segmentation task is BA
-    assert betti_number_error_all_classes(track=TRACK.MR, gt=gt_img, pred=pred_img) == {
+    assert betti_number_error_all_classes(gt=gt_img, pred=pred_img) == {
         "1": {"label": "BA", "B0err": 0},
         "ClsAvgB0err": {"label": "ClsAvgB0err", "B0err": 0.0},
         "MergedBin": {"label": "MergedBin", "B0err": 0},
@@ -250,7 +250,7 @@ def test_multi_class_twoIslands():
     # Pred has the same Betti numbers for:
     # label 1 and label 2 and merged binary
 
-    assert betti_number_error_all_classes(track=TRACK.CT, gt=gt_img, pred=pred_img) == {
+    assert betti_number_error_all_classes(gt=gt_img, pred=pred_img) == {
         "1": {"label": "BA", "B0err": 0},
         "2": {"label": "R-P1P2", "B0err": 2},
         "ClsAvgB0err": {"label": "ClsAvgB0err", "B0err": 1},
@@ -286,9 +286,9 @@ def test_multi_class_donut():
     # Pred has the same Betti numbers for merged binary
     # but label-1 and label-6 should have B0=1, B1=0, B2=0
 
-    assert betti_number_error_all_classes(track=TRACK.MR, gt=gt_img, pred=pred_img) == {
+    assert betti_number_error_all_classes(gt=gt_img, pred=pred_img) == {
         "1": {"label": "BA", "B0err": 0},
-        "6": {"label": "L-ICA", "B0err": 1},
+        "6": {"label": "L-ICA-C6-C7", "B0err": 1},
         "ClsAvgB0err": {"label": "ClsAvgB0err", "B0err": 1 / 2},
         "MergedBin": {"label": "MergedBin", "B0err": 0},
     }
@@ -345,13 +345,13 @@ def test_betti_num_err_dict_e2e():
     #        B0=1, B1=1, B2=0
     # merged binary:
     #        B0=1, B1=1, B2=1
-    assert betti_number_error_all_classes(track=TRACK.CT, gt=gt_img, pred=pred_img) == {
+    assert betti_number_error_all_classes(gt=gt_img, pred=pred_img) == {
         "1": {"label": "BA", "B0err": 0},
         "2": {"label": "R-P1P2", "B0err": 0},
         "3": {"label": "L-P1P2", "B0err": 0},
-        "4": {"label": "R-ICA", "B0err": 1},
+        "4": {"label": "R-ICA-C6-C7", "B0err": 1},
         "5": {"label": "R-M1", "B0err": 0},
-        "6": {"label": "L-ICA", "B0err": 0},
+        "6": {"label": "L-ICA-C6-C7", "B0err": 0},
         "7": {"label": "L-M1", "B0err": 0},
         "8": {"label": "R-Pcom", "B0err": 0},
         "ClsAvgB0err": {"label": "ClsAvgB0err", "B0err": 1 / 8},
@@ -361,7 +361,7 @@ def test_betti_num_err_dict_e2e():
 
 def test_bettiError_nolabels_multiclass():
     """
-    what if there is no labels in both gt and pred? -> B0err_average=0, CoW=0
+    what if there is no labels in both gt and pred? -> raise error
     what if there is no labels in gt? -> depends on pred labels
     """
     # mimic no labels in both gt and pred by reusing a clean slate
@@ -369,10 +369,9 @@ def test_bettiError_nolabels_multiclass():
 
     gt_img, _ = load_image_and_array_as_uint8(gt_path)
 
-    assert betti_number_error_all_classes(track=TRACK.CT, gt=gt_img, pred=gt_img) == {
-        "ClsAvgB0err": {"label": "ClsAvgB0err", "B0err": 0},
-        "MergedBin": {"label": "MergedBin", "B0err": 0},
-    }
+    with pytest.raises(ValueError) as e_info:
+        betti_number_error_all_classes(gt=gt_img, pred=gt_img)
+    assert str(e_info.value) == "no labels in images!"
 
     # gt is clean slate, but pred has some predictions
     gt_path = TESTDIR_2D / "shape_6x3_2D.nii.gz"
@@ -381,7 +380,7 @@ def test_bettiError_nolabels_multiclass():
     gt_img, _ = load_image_and_array_as_uint8(gt_path)
     pred_img, _ = load_image_and_array_as_uint8(pred_path)
 
-    assert betti_number_error_all_classes(track=TRACK.MR, gt=gt_img, pred=pred_img) == {
+    assert betti_number_error_all_classes(gt=gt_img, pred=pred_img) == {
         "1": {"label": "BA", "B0err": 1},
         "ClsAvgB0err": {"label": "ClsAvgB0err", "B0err": 1},
         "MergedBin": {"label": "MergedBin", "B0err": 1},

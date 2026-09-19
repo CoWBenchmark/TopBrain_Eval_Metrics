@@ -6,7 +6,6 @@ Class-average Dice similarity coefficient
 
 import numpy as np
 import SimpleITK as sitk
-from topbrain25_eval.constants import TRACK
 from topbrain25_eval.metrics.generate_cls_avg_dict import generate_cls_avg_dict
 
 
@@ -51,15 +50,12 @@ def dice_coefficient_single_label(
     return dice_score
 
 
-def dice_coefficient_all_classes(
-    *, track: TRACK, gt: sitk.Image, pred: sitk.Image
-) -> dict:
+def dice_coefficient_all_classes(*, gt: sitk.Image, pred: sitk.Image) -> dict:
     """
     use the dict generator from generate_cls_avg_dict
     with dice_coefficient_single_label() as metric_func
     """
     dice_dict = generate_cls_avg_dict(
-        track=track,
         gt=gt,
         pred=pred,
         metric_keys=["Dice"],

@@ -7,7 +7,7 @@ Class-average Hausdorff Distance 95% Percentile (HD95)
 import numpy as np
 import SimpleITK as sitk
 from SimpleITK import GetArrayViewFromImage as ArrayView
-from topbrain25_eval.constants import HD95_UPPER_BOUND, TRACK
+from topbrain25_eval.constants import HD95_UPPER_BOUND
 from topbrain25_eval.metrics.generate_cls_avg_dict import generate_cls_avg_dict
 from topbrain25_eval.utils.utils_mask import arr_is_binary, pad_sitk_image
 
@@ -230,13 +230,12 @@ def _get_surface_distance(seg: sitk.Image) -> tuple[sitk.Image, sitk.Image, int]
     return seg_distance_map, seg_surface, num_surface_pixels
 
 
-def hd95_all_classes(*, track: TRACK, gt: sitk.Image, pred: sitk.Image) -> dict:
+def hd95_all_classes(*, gt: sitk.Image, pred: sitk.Image) -> dict:
     """
     use the dict generator from generate_cls_avg_dict
     with hd95_single_label() as metric_func
     """
     hd_dict = generate_cls_avg_dict(
-        track=track,
         gt=gt,
         pred=pred,
         # hd95_single_label returns [hd95_score, hd100_score]

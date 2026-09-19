@@ -1,10 +1,10 @@
+import pytest
 import SimpleITK as sitk
 from generate_cls_avg_dict import (
     generate_cls_avg_dict,
     update_cls_avg_dict,
     update_metrics_dict,
 )
-from topbrain25_eval.constants import TRACK
 
 
 def dummy_metric_func(gt, pred, label: int):
@@ -204,30 +204,20 @@ def test_generate_cls_avg_dict_blank_multiclass():
     """
     if gt and pred contains no labels and for multiclass task,
     when there are no labels in the images,
-    return blank cls_avg_dict with only average and merged_binary of 0
-    with MULTICLASS_SEGMENTATION
+    raise error because this is unexpected in normal evaluations
     """
     image1 = sitk.Image([3, 3, 3], sitk.sitkUInt8)
     image2 = sitk.Image([3, 3, 3], sitk.sitkUInt8)
-    cls_avg_dict = generate_cls_avg_dict(
-        track=TRACK.CT,
-        gt=image1,
-        pred=image2,
-        # dummy_metric_func returns 4 scores
-        metric_keys=["M1", "M2", "M3"],
-        metric_func=dummy_metric_func,
-    )
-    assert cls_avg_dict == {
-        "ClsAvgM1": {"label": "ClsAvgM1", "M1": 0},
-        "ClsAvgM2": {"label": "ClsAvgM2", "M2": 0},
-        "ClsAvgM3": {"label": "ClsAvgM3", "M3": 0},
-        "MergedBin": {
-            "label": "MergedBin",
-            "M1": 0,
-            "M2": 0,
-            "M3": 0,
-        },
-    }
+
+    with pytest.raises(ValueError) as e_info:
+        generate_cls_avg_dict(
+            gt=image1,
+            pred=image2,
+            # dummy_metric_func returns 4 scores
+            metric_keys=["M1", "M2", "M3"],
+            metric_func=dummy_metric_func,
+        )
+    assert str(e_info.value) == "no labels in images!"
 
 
 def test_generate_cls_avg_dict_only1BA_multiclass():
@@ -249,7 +239,6 @@ def test_generate_cls_avg_dict_only1BA_multiclass():
     image2[2, 2, 2] = 1
 
     cls_avg_dict = generate_cls_avg_dict(
-        track=TRACK.CT,
         gt=image1,
         pred=image2,
         # dummy_metric_func returns metric_scores
@@ -286,7 +275,6 @@ def test_generate_cls_avg_dict_label123_multiclass():
     image2[0, 1, 2] = 3
 
     cls_avg_dict = generate_cls_avg_dict(
-        track=TRACK.MR,
         gt=image1,
         pred=image2,
         # dummy_metric_func returns metric_scores
@@ -326,7 +314,6 @@ def test_generate_cls_avg_dict_label101112HD_multiclass():
     image2[0, 1, 2] = 12
 
     cls_avg_dict = generate_cls_avg_dict(
-        track=TRACK.MR,
         gt=image1,
         pred=image2,
         # use a lambda to return metric_scores

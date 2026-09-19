@@ -1,9 +1,9 @@
 [project]
 name = "topbrain25_eval"
-version = "0.0.1"
-description = "Evaluations for TopBrain 2025 MICCAI Challenge"
+version = "0.2.0"
+description = "Evaluations for TopBrain 2025-26 Challenge"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.9,<3.11"
 dependencies = [
     "evalutils==0.4.2",
     "nibabel==5.1.0",

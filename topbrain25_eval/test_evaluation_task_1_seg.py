@@ -3,15 +3,15 @@ End-to-end test for the entire evaluation pipeline
 """
 
 import json
+import math
 from pathlib import Path
 
-from topbrain25_eval.constants import TRACK
 from topbrain25_eval.evaluation import TopBrainEvaluation
 
 TESTDIR = Path("test_assets/")
 
 
-def test_e2e_TopBrainEvaluation_Task_1_Seg_CT():
+def test_e2e_TopBrainEvaluation_Task_1_Seg():
     """
     under test_assets/, there are two files for
     test-predictions, test-gt
@@ -56,19 +56,17 @@ def test_e2e_TopBrainEvaluation_Task_1_Seg_CT():
     see test_hd95_single_label_Fig59_hole() from test_cls_avg_hd95.py
     """
 
-    track = TRACK.CT
-
     expected_num_cases = 2
 
     # folder prefix to differentiate the tasks
     prefix = "task_1_seg_"
 
     # output_path for clean up
-    output_path = Path(f"{prefix}output_test_e2e_TopBrainEvaluation_CT/")
+    output_path = Path(f"{prefix}output_test_e2e_TopBrainEvaluation/")
 
     evalRun = TopBrainEvaluation(
-        track,
         expected_num_cases,
+        num_workers=3,
         predictions_path=TESTDIR / f"{prefix}predictions/",
         ground_truth_path=TESTDIR / f"{prefix}ground-truth/",
         output_path=output_path,
@@ -88,14 +86,14 @@ def test_e2e_TopBrainEvaluation_Task_1_Seg_CT():
     f_idx = "0"
     # Dice same as test_multi_class_donut() in test_cls_avg_dice.py
     assert round(generated_metrics_json["case"]["Dice_BA"][f_idx], 2) == 0.75
-    assert generated_metrics_json["case"]["Dice_L-ICA"][f_idx] == 0
+    assert generated_metrics_json["case"]["Dice_L-ICA-C6-C7"][f_idx] == 0
     assert (
         round(generated_metrics_json["case"]["Dice_ClsAvgDice"][f_idx], 3) == 0.375
     )  # 0.75/2
     assert generated_metrics_json["case"]["Dice_MergedBin"][f_idx] == 1
     # B0 same as test_multi_class_donut() in test_cls_avg_b0.py
     assert generated_metrics_json["case"]["B0err_BA"][f_idx] == 0
-    assert generated_metrics_json["case"]["B0err_L-ICA"][f_idx] == 1
+    assert generated_metrics_json["case"]["B0err_L-ICA-C6-C7"][f_idx] == 1
     assert generated_metrics_json["case"]["B0err_ClsAvgB0err"][f_idx] == 0.5
     assert generated_metrics_json["case"]["B0err_MergedBin"][f_idx] == 0
     # NbErr both labels error -> avg 1
@@ -105,6 +103,16 @@ def test_e2e_TopBrainEvaluation_Task_1_Seg_CT():
         generated_metrics_json["case"]["all_detection_dicts"][f_idx]["8"]["Detection"]
         == "TN"
     )
+
+    # new in v2, contami metrics
+    assert generated_metrics_json["case"]["FGC_ratio_after_thresh"][f_idx] == 0.4
+    assert generated_metrics_json["case"]["FGC_sources_after_thresh"][f_idx] == 1
+    assert generated_metrics_json["case"]["UnderSeg_ratio_after_thresh"][f_idx] == 0
+    assert (
+        generated_metrics_json["case"]["UnderSeg_prevalence_after_thresh"][f_idx] == 0
+    )
+    assert generated_metrics_json["case"]["BGC_voxels"][f_idx] == 0
+    assert generated_metrics_json["case"]["BGC_sources"][f_idx] == 0
 
     ################# 1th-file #################
     f_idx = "1"
@@ -126,24 +134,47 @@ def test_e2e_TopBrainEvaluation_Task_1_Seg_CT():
     # -> label-5 {1,2,3,6,7,8}
     assert generated_metrics_json["case"]["NbErr_R-M1"][f_idx] == 6
     # -> label-6 {1,2,5,8}
-    assert generated_metrics_json["case"]["NbErr_L-ICA"][f_idx] == 4
+    assert generated_metrics_json["case"]["NbErr_L-ICA-C6-C7"][f_idx] == 4
     # -> label-7 {1,2,3,5,8}
     assert generated_metrics_json["case"]["NbErr_L-M1"][f_idx] == 5
     # -> label-8 {1,3,5,6,7}
     assert generated_metrics_json["case"]["NbErr_R-Pcom"][f_idx] == 5
     assert generated_metrics_json["case"]["NbErr_ClsAvgNbErr"][f_idx] == 32 / 7  # ~4.57
+    # detection IS applicable -> NOT all TN! R-Pcom is TP
+    assert (
+        generated_metrics_json["case"]["all_detection_dicts"][f_idx]["8"]["Detection"]
+        == "TP"
+    )
+    assert (
+        generated_metrics_json["case"]["all_detection_dicts"][f_idx]["33"]["Detection"]
+        == "TN"
+    )
+
+    # new in v2, contami metrics
+    assert generated_metrics_json["case"]["FGC_ratio_after_thresh"][f_idx] == 0
+    assert generated_metrics_json["case"]["FGC_sources_after_thresh"][f_idx] == 0
+    assert (
+        generated_metrics_json["case"]["UnderSeg_ratio_after_thresh"][f_idx]
+        == (8 / 27 + 27 / 27 + 12 / 27 + 12 / 27) / 8
+    )  # ~0.27315
+    assert (
+        generated_metrics_json["case"]["UnderSeg_prevalence_after_thresh"][f_idx]
+        == 4 / 8
+    )  # 0.5
+    assert math.isnan(generated_metrics_json["case"]["BGC_voxels"][f_idx])
+    assert math.isnan(generated_metrics_json["case"]["BGC_sources"][f_idx])
 
     # average of above sanity checks
     assert round(generated_metrics_json["aggregates"]["Dice_BA"]["mean"], 3) == 1.75 / 2
     assert round(
-        generated_metrics_json["aggregates"]["Dice_L-ICA"]["mean"], 2
+        generated_metrics_json["aggregates"]["Dice_L-ICA-C6-C7"]["mean"], 2
     ) == round(0.8571 / 2, 2)
     assert generated_metrics_json["aggregates"]["Dice_L-P1P2"]["mean"] == 1
     assert round(
         generated_metrics_json["aggregates"]["Dice_ClsAvgDice"]["mean"], 2
     ) == round((0.375 + 0.83) / 2, 2)  # ~0.6
-    assert generated_metrics_json["aggregates"]["B0err_R-ICA"]["mean"] == 1
-    assert generated_metrics_json["aggregates"]["B0err_L-ICA"]["mean"] == 1 / 2
+    assert generated_metrics_json["aggregates"]["B0err_R-ICA-C6-C7"]["mean"] == 1
+    assert generated_metrics_json["aggregates"]["B0err_L-ICA-C6-C7"]["mean"] == 1 / 2
     assert (
         generated_metrics_json["aggregates"]["B0err_ClsAvgB0err"]["mean"]
         == (0.5 + 0.125) / 2
@@ -151,10 +182,40 @@ def test_e2e_TopBrainEvaluation_Task_1_Seg_CT():
     assert round(
         generated_metrics_json["aggregates"]["NbErr_ClsAvgNbErr"]["mean"], 2
     ) == round((1 + 4.57) / 2, 2)  # ~2.7857
+    # side-road detection
+    assert (
+        generated_metrics_json["aggregates"]["dect_avg"]["f1_score"]["mean"]
+        == generated_metrics_json["aggregates"]["dect_avg"]["precision"]["mean"]
+        == generated_metrics_json["aggregates"]["dect_avg"]["recall"]["mean"]
+        == 1 / 15  # only R-Pcom is non-zero = 1
+    )
+    # new in v2, contami metrics
+    assert (
+        generated_metrics_json["aggregates"]["FGC_ratio_after_thresh"]["mean"]
+        == 0.4 / 2
+    )  # 20%
+    assert (
+        generated_metrics_json["aggregates"]["FGC_sources_after_thresh"]["mean"]
+        == 1 / 2
+    )  # 0.5
+    assert (
+        generated_metrics_json["aggregates"]["UnderSeg_ratio_after_thresh"]["mean"]
+        == ((8 / 27 + 27 / 27 + 12 / 27 + 12 / 27) / 8) / 2
+    )  # ~0.27315 / 2 = 0.13657
+    assert (
+        generated_metrics_json["aggregates"]["UnderSeg_prevalence_after_thresh"]["mean"]
+        == 0.5 / 2
+    )  # 0.25
+    assert (
+        generated_metrics_json["aggregates"]["BGC_voxels"]["count"] == 1
+    )  # one nan not counted due to filled-gt for file-1
+    assert (
+        generated_metrics_json["aggregates"]["BGC_sources"]["count"] == 1
+    )  # one nan not counted due to filled-gt for file-1
 
     # compare the saved and expected metrics.json
 
-    with open(TESTDIR / f"{prefix}output/expected_e2e_test_ct_metrics.json") as f:
+    with open(TESTDIR / f"{prefix}output/expected_e2e_test_metrics.json") as f:
         expected_metrics_json = json.load(f)
 
     assert expected_metrics_json == generated_metrics_json
@@ -168,12 +229,10 @@ def test_e2e_TopBrainEvaluation_Task_1_Seg_CT():
     output_path.rmdir()
 
 
-def test_e2e_TopBrainEvaluation_Task_1_Seg_MR():
+def test_e2e_TopBrainEvaluation_Task_1_Seg_singleWorker():
     """
-    same as test_e2e_TopBrainEvaluation_Task_1_Seg_CT but for MR
+    num_workers should not affect the output metrics.json
     """
-    # NOTE: changing the track to CT from MR
-    track = TRACK.MR
 
     expected_num_cases = 2
 
@@ -181,11 +240,11 @@ def test_e2e_TopBrainEvaluation_Task_1_Seg_MR():
     prefix = "task_1_seg_"
 
     # output_path for clean up
-    output_path = Path(f"{prefix}output_test_e2e_TopBrainEvaluation_MR/")
+    output_path = Path(f"{prefix}output_test_e2e_TopBrainEvaluation_singleWorker/")
 
     evalRun = TopBrainEvaluation(
-        track,
         expected_num_cases,
+        num_workers=1,
         predictions_path=TESTDIR / f"{prefix}predictions/",
         ground_truth_path=TESTDIR / f"{prefix}ground-truth/",
         output_path=output_path,
@@ -194,13 +253,14 @@ def test_e2e_TopBrainEvaluation_Task_1_Seg_MR():
     # run the evaluation
     evalRun.evaluate()
 
-    # compare the two metrics.json
-
-    with open(TESTDIR / f"{prefix}output/expected_e2e_test_mr_metrics.json") as f:
-        expected_metrics_json = json.load(f)
-
+    # read the saved metrics.json
     with open(output_path / "metrics.json") as f:
         generated_metrics_json = json.load(f)
+
+    # compare the saved and expected metrics.json
+
+    with open(TESTDIR / f"{prefix}output/expected_e2e_test_metrics.json") as f:
+        expected_metrics_json = json.load(f)
 
     assert expected_metrics_json == generated_metrics_json
 

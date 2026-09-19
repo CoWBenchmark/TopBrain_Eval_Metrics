@@ -1,7 +1,7 @@
 """
 Helper for generating a class average score dict
 
-Metrics for Task-1-CoW-Segmentation
+Metrics for Task-1-WholeBrain-Segmentation
 """
 
 # import pprint
@@ -9,17 +9,11 @@ from typing import Callable
 
 import numpy as np
 import SimpleITK as sitk
-from topbrain25_eval.constants import (
-    BIN_CLASS_LABEL_MAP,
-    MUL_CLASS_LABEL_MAP_CT,
-    MUL_CLASS_LABEL_MAP_MR,
-    TRACK,
-)
+from topbrain25_eval.constants import BIN_CLASS_LABEL_MAP, MUL_CLASS_LABEL_MAP
 from topbrain25_eval.utils.utils_mask import extract_labels
 
 
 def generate_cls_avg_dict(
-    track: TRACK,
     gt: sitk.Image,
     pred: sitk.Image,
     metric_keys: list[str],
@@ -61,11 +55,6 @@ def generate_cls_avg_dict(
     # print(f"metric_keys = {metric_keys}")
     # print(f"metric_func = {metric_func.__name__}\n")
 
-    if track == TRACK.CT:
-        MUL_CLASS_LABEL_MAP = MUL_CLASS_LABEL_MAP_CT
-    else:
-        MUL_CLASS_LABEL_MAP = MUL_CLASS_LABEL_MAP_MR
-
     # gt and pred should have the same shape
     assert gt.GetSize() == pred.GetSize(), "gt pred not matching shapes!"
 
@@ -78,12 +67,12 @@ def generate_cls_avg_dict(
     pred_array = sitk.GetArrayFromImage(pred).transpose((2, 1, 0)).astype(np.uint8)
 
     # SimpleITK image GetSize should have the same shape as transposed (x,y,z) npy
-    assert gt.GetSize() == gt_array.shape, (
-        f"gt.GetSize():{gt.GetSize()} != gt_array.shape:{gt_array.shape}"
-    )
-    assert pred.GetSize() == pred_array.shape, (
-        f"pred.GetSize():{pred.GetSize()} != pred_array.shape:{pred_array.shape}"
-    )
+    assert (
+        gt.GetSize() == gt_array.shape
+    ), f"gt.GetSize():{gt.GetSize()} != gt_array.shape:{gt_array.shape}"
+    assert (
+        pred.GetSize() == pred_array.shape
+    ), f"pred.GetSize():{pred.GetSize()} != pred_array.shape:{pred_array.shape}"
 
     labels = extract_labels(gt_array, pred_array)
 
@@ -95,31 +84,9 @@ def generate_cls_avg_dict(
     # print("### Multiclass Segmentation ###")
 
     # when there are no labels in the images,
-    # return blank cls_avg_dict with only average and merged_binary of 0
+    # raise error because this is unexpected in normal evaluations
     if len(labels) == 0:
-        for cls_avg_key in cls_avg_keys:
-            # update each class average key to 0
-            update_cls_avg_dict(
-                cls_avg_dict=cls_avg_dict,
-                label=cls_avg_key,
-                label_map=None,
-                metric_keys=metric_keys,
-                metric_scores=[0] * len(metric_keys),
-            )
-
-        if binary_merge:
-            # update merged binary class to 0
-            update_cls_avg_dict(
-                cls_avg_dict=cls_avg_dict,
-                # use the label_map for merged bin instead of "1"
-                label=BIN_CLASS_LABEL_MAP["1"],
-                label_map=None,
-                metric_keys=metric_keys,
-                metric_scores=[0] * len(metric_keys),
-            )
-
-        # print(f"\ncls_avg_dict = {cls_avg_dict}")
-        return cls_avg_dict
+        raise ValueError("no labels in images!")
 
     # otherwise compute the metric_scores for
     # all present labels and update the cls_avg_dict

@@ -13,24 +13,14 @@ for detection of the "Side road" vessel components
 
 import numpy as np
 from pandas import Series
-from topbrain25_eval.constants import (
-    MUL_CLASS_LABEL_MAP_CT,
-    MUL_CLASS_LABEL_MAP_MR,
-    SIDEROAD_COMPONENT_LABELS_CT,
-    SIDEROAD_COMPONENT_LABELS_MR,
-    TRACK,
-)
+from topbrain25_eval.constants import MUL_CLASS_LABEL_MAP, SIDEROAD_COMPONENT_LABELS
 
 
-def aggregate_all_detection_dicts(track: TRACK, all_detection_dicts: Series) -> dict:
+def aggregate_all_detection_dicts(all_detection_dicts: Series) -> dict:
     # print("\n[aggregate] aggregate_all_detection_dicts()\n")
 
-    if track == TRACK.CT:
-        component_labels = SIDEROAD_COMPONENT_LABELS_CT
-        label_map = MUL_CLASS_LABEL_MAP_CT
-    else:
-        component_labels = SIDEROAD_COMPONENT_LABELS_MR
-        label_map = MUL_CLASS_LABEL_MAP_MR
+    component_labels = SIDEROAD_COMPONENT_LABELS
+    label_map = MUL_CLASS_LABEL_MAP
 
     # get the detection counts
     detection_counts = count_sideroad_detection(
@@ -60,9 +50,9 @@ def count_sideroad_detection(
     # print(f"num_component_labels = {num_component_labels}")
     # print(f"num_detection_dict_labels = {num_detection_dict_labels}")
 
-    assert num_component_labels == num_detection_dict_labels, (
-        "unmatched num of labels for detection metric"
-    )
+    assert (
+        num_component_labels == num_detection_dict_labels
+    ), "unmatched num of labels for detection metric"
 
     detection_counts = {}
 

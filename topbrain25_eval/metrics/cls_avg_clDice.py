@@ -7,7 +7,6 @@ Class-average centerline Dice (clDice)
 import numpy as np
 import SimpleITK as sitk
 from skimage.morphology import skeletonize, skeletonize_3d
-from topbrain25_eval.constants import TRACK
 from topbrain25_eval.metrics.generate_cls_avg_dict import generate_cls_avg_dict
 from topbrain25_eval.utils.utils_mask import convert_multiclass_to_binary
 
@@ -87,13 +86,12 @@ def clDice_single_label(*, gt: sitk.Image, pred: sitk.Image, label: int) -> floa
         return clDice(v_p_pred=pred_label_arr, v_l_gt=gt_label_arr)
 
 
-def clDice_all_classes(*, track: TRACK, gt: sitk.Image, pred: sitk.Image) -> dict:
+def clDice_all_classes(*, gt: sitk.Image, pred: sitk.Image) -> dict:
     """
     use the dict generator from generate_cls_avg_dict
     with clDice_single_label() as metric_func
     """
     clDice_dict = generate_cls_avg_dict(
-        track=track,
         gt=gt,
         pred=pred,
         metric_keys=["clDice"],

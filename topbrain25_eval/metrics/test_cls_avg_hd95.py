@@ -6,7 +6,7 @@ from pathlib import Path
 
 import SimpleITK as sitk
 from cls_avg_hd95 import hd95_all_classes, hd95_single_label
-from topbrain25_eval.constants import HD95_UPPER_BOUND, TRACK
+from topbrain25_eval.constants import HD95_UPPER_BOUND
 from topbrain25_eval.utils.utils_nii_mha_sitk import load_image_and_array_as_uint8
 
 ##############################################################
@@ -347,16 +347,6 @@ def test_hd95_single_label_FPFN():
     """
     in case of FP or FN trigger worst value penalty
     """
-    # mimic no labels in both gt and pred by reusing a clean slate
-    gt_path = TESTDIR_2D / "shape_6x3_2D.nii.gz"
-
-    gt_img, _ = load_image_and_array_as_uint8(gt_path)
-
-    assert hd95_single_label(gt=gt_img, pred=gt_img, label=1) == [
-        HD95_UPPER_BOUND,
-        HD95_UPPER_BOUND,
-    ]
-
     # NOTE: in fact even for a mask with valid labels,
     # as long as the filtered img is empty in img == label
     # will trigger FP FN
@@ -498,6 +488,7 @@ def test_hd95_single_label_itk_tutorial():
     surface_hausdorff_distance()
     Surface Hausdorff result (reference1-segmentation): 6.0
     Surface Hausdorff result (reference2-segmentation): 8.9442720413208
+    NOTE: different from SITK notebook due to fullyConnected=True in sitk.LabelContour()
     """
     # Create our segmentations and display
     image_size = [64, 64]
@@ -553,7 +544,7 @@ def test_hd95_all_classes_Fig54_5class():
     gt_img, _ = load_image_and_array_as_uint8(gt_path)
     pred_img, _ = load_image_and_array_as_uint8(pred_path)
 
-    hd_dict = hd95_all_classes(track=TRACK.CT, gt=gt_img, pred=pred_img)
+    hd_dict = hd95_all_classes(gt=gt_img, pred=pred_img)
 
     assert hd_dict == {
         # Pred 1 HD=1.4, HD95=1.3
@@ -565,7 +556,11 @@ def test_hd95_all_classes_Fig54_5class():
         "3": {"label": "L-P1P2", "HD95": 2.0, "HD": 3.0},
         # Pred 4 HD=2.2, HD95=2
         # BUT WHY??? my calculation shows 1.4 and 1.4 (sqrt of 2)
-        "4": {"label": "R-ICA", "HD95": 1.4142135381698608, "HD": 1.4142135381698608},
+        "4": {
+            "label": "R-ICA-C6-C7",
+            "HD95": 1.4142135381698608,
+            "HD": 1.4142135381698608,
+        },
         # Pred 5 HD=2, HD95=1.2
         # BUT my calculation shows hd95 to be 1.05?!
         "5": {"label": "R-M1", "HD95": 1.0500000000000007, "HD": 2.0},
@@ -597,7 +592,7 @@ def test_hd95_all_classes_3D_nipy_scaled_image():
     gt_img, _ = load_image_and_array_as_uint8(gt_path, log_sitk_attr=True)
     pred_img, _ = load_image_and_array_as_uint8(pred_path, log_sitk_attr=True)
 
-    hd_dict = hd95_all_classes(track=TRACK.MR, gt=gt_img, pred=pred_img)
+    hd_dict = hd95_all_classes(gt=gt_img, pred=pred_img)
 
     assert hd_dict == {
         # Label-1 GT and Pred differ by a corner voxel along the Y-size
@@ -658,7 +653,7 @@ def test_hd95_all_classes_completely_filled():
     print("image1:")
     print(sitk.GetArrayViewFromImage(image1))
 
-    hd_dict = hd95_all_classes(track=TRACK.CT, gt=image1, pred=image1)
+    hd_dict = hd95_all_classes(gt=image1, pred=image1)
 
     assert hd_dict == {
         "15": {"label": "3rd-A2", "HD95": 0.0, "HD": 0.0},

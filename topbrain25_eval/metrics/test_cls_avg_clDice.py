@@ -5,10 +5,8 @@ run the tests with pytest
 from pathlib import Path
 
 import numpy as np
-import SimpleITK as sitk
 from cls_avg_clDice import cl_score, clDice, clDice_all_classes, clDice_single_label
 from skimage.morphology import skeletonize, skeletonize_3d
-from topbrain25_eval.constants import TRACK
 from topbrain25_eval.utils.utils_mask import (
     convert_multiclass_to_binary,
     extract_labels,
@@ -141,7 +139,7 @@ def test_cl_score_2D_blob():
     # the wrapper clDice_single_label() should be the same as clDice() itself
     assert clDice_single_label(gt=gt_img, pred=pred_img, label=1) == 1
 
-    clDice_dict = clDice_all_classes(track=TRACK.CT, gt=gt_img, pred=pred_img)
+    clDice_dict = clDice_all_classes(gt=gt_img, pred=pred_img)
     assert clDice_dict == {
         "1": {"label": "BA", "clDice": 1.0},
         "ClsAvgclDice": {"label": "ClsAvgclDice", "clDice": 1.0},
@@ -188,7 +186,7 @@ def test_cl_score_2D_Tshaped():
     assert clDice_single_label(gt=gt_img, pred=pred_img, label=2) == 0
 
     # only 1 label
-    clDice_dict = clDice_all_classes(track=TRACK.MR, gt=gt_img, pred=pred_img)
+    clDice_dict = clDice_all_classes(gt=gt_img, pred=pred_img)
     assert clDice_dict == {
         "1": {"label": "BA", "clDice": (3 / 2) / (7 / 4)},
         "ClsAvgclDice": {"label": "ClsAvgclDice", "clDice": (3 / 2) / (7 / 4)},
@@ -306,45 +304,46 @@ def test_clDice_Fig51():
         clDice_single_label(gt=gt_img, pred=pred_2_img, label=6) == 0.6666666666666666
     )
 
-    assert clDice_all_classes(track=TRACK.CT, gt=gt_img, pred=pred_1_img) == {
-        "6": {"label": "L-ICA", "clDice": 0.8571428571428571},
+    assert clDice_all_classes(gt=gt_img, pred=pred_1_img) == {
+        "6": {"label": "L-ICA-C6-C7", "clDice": 0.8571428571428571},
         "ClsAvgclDice": {"label": "ClsAvgclDice", "clDice": 0.8571428571428571},
         "MergedBin": {"label": "MergedBin", "clDice": 0.8571428571428571},
     }
 
-    assert clDice_all_classes(track=TRACK.MR, gt=gt_img, pred=pred_2_img) == {
-        "6": {"label": "L-ICA", "clDice": 0.6666666666666666},
+    assert clDice_all_classes(gt=gt_img, pred=pred_2_img) == {
+        "6": {"label": "L-ICA-C6-C7", "clDice": 0.6666666666666666},
         "ClsAvgclDice": {"label": "ClsAvgclDice", "clDice": 0.6666666666666666},
         "MergedBin": {"label": "MergedBin", "clDice": 0.6666666666666666},
     }
 
 
 #### multiclass for each of the 2D slice
-def test_clDice_all_classes():
-    """
-    1st slice is shape_6x3_2D_clDice_elong gt vs pred (label-40)
-    2nd slice is shape_5x5_2D_clDice_Tshaped gt vs pred (label-39)
-    3rd slice is shape_6x3_2D_clDice_Fig51 gt vs pred1 (label-38)
-    """
-    gt_img = sitk.ReadImage(TESTDIR_3D / "shape_5x6x4_multiclass_clDice_gt.nii.gz")
-    pred_img = sitk.ReadImage(TESTDIR_3D / "shape_5x6x4_multiclass_clDice_pred1.nii.gz")
+# NOTE: deprecated in v2
+# def test_clDice_all_classes():
+#     """
+#     1st slice is shape_6x3_2D_clDice_elong gt vs pred (label-40)
+#     2nd slice is shape_5x5_2D_clDice_Tshaped gt vs pred (label-39)
+#     3rd slice is shape_6x3_2D_clDice_Fig51 gt vs pred1 (label-38)
+#     """
+#     gt_img = sitk.ReadImage(TESTDIR_3D / "shape_5x6x4_multiclass_clDice_gt.nii.gz")
+#     pred_img = sitk.ReadImage(TESTDIR_3D / "shape_5x6x4_multiclass_clDice_pred1.nii.gz")
 
-    # CT labels 38-40
-    clDice_dict_CT = clDice_all_classes(track=TRACK.CT, gt=gt_img, pred=pred_img)
-    assert clDice_dict_CT == {
-        "38": {"label": "R-BVR", "clDice": 0.8571428571428571},
-        "39": {"label": "L-BVR", "clDice": ((3 / 2) / (7 / 4))},
-        "40": {"label": "SSS", "clDice": 1.0},
-        "ClsAvgclDice": {"label": "ClsAvgclDice", "clDice": 0.9047619047619048},
-        "MergedBin": {"label": "MergedBin", "clDice": 0.8333333333333333},
-    }
+#     # CT labels 38-40
+#     clDice_dict_CT = clDice_all_classes(track=TRACK.CT, gt=gt_img, pred=pred_img)
+#     assert clDice_dict_CT == {
+#         "38": {"label": "R-BVR", "clDice": 0.8571428571428571},
+#         "39": {"label": "L-BVR", "clDice": ((3 / 2) / (7 / 4))},
+#         "40": {"label": "SSS", "clDice": 1.0},
+#         "ClsAvgclDice": {"label": "ClsAvgclDice", "clDice": 0.9047619047619048},
+#         "MergedBin": {"label": "MergedBin", "clDice": 0.8333333333333333},
+#     }
 
-    # MR labels 38-40
-    clDice_dict_MR = clDice_all_classes(track=TRACK.MR, gt=gt_img, pred=pred_img)
-    assert clDice_dict_MR == {
-        "38": {"label": "L-STA", "clDice": 0.8571428571428571},
-        "39": {"label": "R-MaxA", "clDice": ((3 / 2) / (7 / 4))},
-        "40": {"label": "L-MaxA", "clDice": 1.0},
-        "ClsAvgclDice": {"label": "ClsAvgclDice", "clDice": 0.9047619047619048},
-        "MergedBin": {"label": "MergedBin", "clDice": 0.8333333333333333},
-    }
+#     # MR labels 38-40
+#     clDice_dict_MR = clDice_all_classes(track=TRACK.MR, gt=gt_img, pred=pred_img)
+#     assert clDice_dict_MR == {
+#         "38": {"label": "L-STA", "clDice": 0.8571428571428571},
+#         "39": {"label": "R-MaxA", "clDice": ((3 / 2) / (7 / 4))},
+#         "40": {"label": "L-MaxA", "clDice": 1.0},
+#         "ClsAvgclDice": {"label": "ClsAvgclDice", "clDice": 0.9047619047619048},
+#         "MergedBin": {"label": "MergedBin", "clDice": 0.8333333333333333},
+#     }

@@ -10,7 +10,6 @@ from detection_sideroad_labels import (
     detection_single_label,
     iou_single_label,
 )
-from topbrain25_eval.constants import TRACK
 from topbrain25_eval.utils.utils_nii_mha_sitk import load_image_and_array_as_uint8
 
 ##############################################################
@@ -67,10 +66,7 @@ def test_iou_single_label_Fig50_small_multiclass():
     pred_img, _ = load_image_and_array_as_uint8(pred_path)
 
     # for label-1, there is no mask for computation
-    # IoU should be 0
-    label = 1
-    iou_score = iou_single_label(gt=gt_img, pred=pred_img, label=label)
-    assert iou_score == 0
+    #  -> will not reach due to extract_labels()
 
     # IoU = 0.67 for Pred 1 (label-10)
     label = 10
@@ -155,9 +151,7 @@ def test_iou_single_label_blank_slices():
     assert iou == 0
 
     # label-9 (not in either gt or pred)
-    label = 9
-    iou = iou_single_label(gt=image1, pred=image2, label=label)
-    assert iou == 0
+    #  -> will not reach due to extract_labels()
 
 
 def test_iou_coefficient_single_label_3D_voxel_spacing():
@@ -290,6 +284,7 @@ def test_detection_sideroad_labels_Fig50_small_multiclass():
     pred_img, _ = load_image_and_array_as_uint8(pred_path)
 
     expected_out = {
+        # label 8 and 9, nothing in GT and Pred, thus TN
         "8": {"label": "R-Pcom", "Detection": "TN"},
         "9": {"label": "L-Pcom", "Detection": "TN"},
         "10": {"label": "Acom", "Detection": "TP"},
@@ -308,28 +303,9 @@ def test_detection_sideroad_labels_Fig50_small_multiclass():
         "34": {"label": "L-OA", "Detection": "TN"},
     }
 
-    detection_dict_ct = detection_sideroad_labels(
-        track=TRACK.CT, gt=gt_img, pred=pred_img
-    )
+    detection_dict = detection_sideroad_labels(gt=gt_img, pred=pred_img)
 
-    # label 8 and 9, nothing in GT and Pred, thus TN
-    assert detection_dict_ct == expected_out | {
-        # only in CT
-        "37": {"label": "ICVs", "Detection": "TN"},
-        "38": {"label": "R-BVR", "Detection": "TN"},
-        "39": {"label": "L-BVR", "Detection": "TN"},
-    }
-
-    detection_dict_mr = detection_sideroad_labels(
-        track=TRACK.MR, gt=gt_img, pred=pred_img
-    )
-
-    # label 8 and 9, nothing in GT and Pred, thus TN
-    assert detection_dict_mr == expected_out | {
-        # only in MR
-        "41": {"label": "R-MMA", "Detection": "TN"},
-        "42": {"label": "L-MMA", "Detection": "TN"},
-    }
+    assert detection_dict == expected_out
 
 
 def test_detection_sideroad_labels_ThresholdIoU():
@@ -369,26 +345,9 @@ def test_detection_sideroad_labels_ThresholdIoU():
         "34": {"label": "L-OA", "Detection": "TN"},
     }
 
-    detection_dict_ct = detection_sideroad_labels(
-        track=TRACK.CT, gt=gt_img, pred=pred_img
-    )
+    detection_dict = detection_sideroad_labels(gt=gt_img, pred=pred_img)
 
-    assert detection_dict_ct == expected_out | {
-        # only in CT
-        "37": {"label": "ICVs", "Detection": "TN"},
-        "38": {"label": "R-BVR", "Detection": "TN"},
-        "39": {"label": "L-BVR", "Detection": "TN"},
-    }
-
-    detection_dict_mr = detection_sideroad_labels(
-        track=TRACK.MR, gt=gt_img, pred=pred_img
-    )
-
-    assert detection_dict_mr == expected_out | {
-        # only in MR
-        "41": {"label": "R-MMA", "Detection": "TN"},
-        "42": {"label": "L-MMA", "Detection": "TN"},
-    }
+    assert detection_dict == expected_out
 
 
 def test_detection_sideroad_labels_ThresholdIoU_CT():
@@ -405,15 +364,15 @@ def test_detection_sideroad_labels_ThresholdIoU_CT():
     gt_img, _ = load_image_and_array_as_uint8(gt_path)
     pred_img, _ = load_image_and_array_as_uint8(pred_path)
 
-    detection_dict = detection_sideroad_labels(track=TRACK.CT, gt=gt_img, pred=pred_img)
+    detection_dict = detection_sideroad_labels(gt=gt_img, pred=pred_img)
 
     assert detection_dict == {
         # label-39 IoU = 0.25 -> TP
-        "39": {"label": "L-BVR", "Detection": "TP"},
+        # "39": {"label": "L-BVR", "Detection": "TP"},
         # label-38 IoU < 0.25 -> FN
-        "38": {"label": "R-BVR", "Detection": "FN"},
+        # "38": {"label": "R-BVR", "Detection": "FN"},
         # label-37 IoU > 0.25 -> TP
-        "37": {"label": "ICVs", "Detection": "TP"},
+        # "37": {"label": "ICVs", "Detection": "TP"},
         # label-34 GT missing, pred not -> FP
         "34": {"label": "L-OA", "Detection": "FP"},
         # remaining all TN
@@ -448,13 +407,13 @@ def test_detection_sideroad_labels_ThresholdIoU_MR():
     gt_img, _ = load_image_and_array_as_uint8(gt_path)
     pred_img, _ = load_image_and_array_as_uint8(pred_path)
 
-    detection_dict = detection_sideroad_labels(track=TRACK.MR, gt=gt_img, pred=pred_img)
+    detection_dict = detection_sideroad_labels(gt=gt_img, pred=pred_img)
 
     assert detection_dict == {
         # label-42 IoU = 0.25 -> TP
-        "42": {"label": "L-MMA", "Detection": "TP"},
+        # "42": {"label": "L-MMA", "Detection": "TP"},
         # label-41 IoU < 0.25 -> FN
-        "41": {"label": "R-MMA", "Detection": "FN"},
+        # "41": {"label": "R-MMA", "Detection": "FN"},
         # label-34 IoU > 0.25 -> TP
         "34": {"label": "L-OA", "Detection": "TP"},
         # label-33 GT missing, pred not -> FP

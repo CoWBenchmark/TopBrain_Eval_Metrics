@@ -2,6 +2,7 @@
 re-use test_edge cases 003 014 023 in topcow_roi
 """
 
+import json
 import os
 from pathlib import Path
 
@@ -94,6 +95,10 @@ def test_get_neighbor_per_mask_topcow_ct_003():
         "12": [10],
     }
 
+    with open(save_json_path, "r") as jsonfile:
+        data = json.load(jsonfile)
+        assert data == serializable_dict
+
     # clean up
     os.remove(save_json_path)
 
@@ -120,6 +125,10 @@ def test_get_neighbor_per_mask_topcow_mr_014():
         "12": [6, 10, 11],
         "15": [10],
     }
+
+    with open(save_json_path, "r") as jsonfile:
+        data = json.load(jsonfile)
+        assert data == serializable_dict
 
     # clean up
     os.remove(save_json_path)
@@ -149,6 +158,50 @@ def test_get_neighbor_per_mask_topcow_mr_023():
         "12": [10],
     }
 
+    with open(save_json_path, "r") as jsonfile:
+        data = json.load(jsonfile)
+        assert data == serializable_dict
+
+    # clean up
+    os.remove(save_json_path)
+
+
+def test_get_label_neighbors_emptyPred():
+    # empty pred
+    mask_arr = np.zeros((5, 2, 1), dtype=np.int_)
+    mask_img = sitk.GetImageFromArray(mask_arr)
+
+    # output dict to rm later
+    save_json_path = TESTDIR / "test_get_label_neighbors_emptyPred.json"
+
+    serializable_dict = get_neighbor_per_mask(mask_img, save_json_path)
+
+    assert serializable_dict == {}
+
+    with open(save_json_path, "r") as jsonfile:
+        data = json.load(jsonfile)
+        assert data == serializable_dict
+
+    # clean up
+    os.remove(save_json_path)
+
+
+def test_get_label_neighbors_filledImg():
+    # filled with label-14
+    mask_arr = np.array([[[14, 14, 14], [14, 14, 14], [14, 14, 14]]]).astype(np.uint8)
+    mask_img = sitk.GetImageFromArray(mask_arr)
+
+    # output dict to rm later
+    save_json_path = TESTDIR / "test_get_label_neighbors_filledImg.json"
+
+    serializable_dict = get_neighbor_per_mask(mask_img, save_json_path)
+
+    assert serializable_dict == {"14": []}
+
+    with open(save_json_path, "r") as jsonfile:
+        data = json.load(jsonfile)
+        assert data == serializable_dict
+
     # clean up
     os.remove(save_json_path)
 
@@ -176,6 +229,10 @@ def test_get_label_neighbors_4corners():
     serializable_dict = get_neighbor_per_mask(mask_img, save_json_path)
 
     assert serializable_dict == {"1": [], "2": [], "3": [], "4": []}
+
+    with open(save_json_path, "r") as jsonfile:
+        data = json.load(jsonfile)
+        assert data == serializable_dict
 
     # clean up
     os.remove(save_json_path)
@@ -211,6 +268,10 @@ def test_get_label_neighbors_simple_np_mask():
         # label-3 neighbors = 1, 2
         "3": [1, 2],
     }
+
+    with open(save_json_path, "r") as jsonfile:
+        data = json.load(jsonfile)
+        assert data == serializable_dict
 
     # clean up
     os.remove(save_json_path)
@@ -255,6 +316,10 @@ def test_get_label_neighbors_complex_np_mask():
         # label-7 neighbors 5, 6
         "7": [5, 6],
     }
+
+    with open(save_json_path, "r") as jsonfile:
+        data = json.load(jsonfile)
+        assert data == serializable_dict
 
     # clean up
     os.remove(save_json_path)

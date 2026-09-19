@@ -15,7 +15,6 @@ from pandas import DataFrame, concat, merge, set_option
 from topbrain25_eval.aggregate.aggregate_all_detection_dicts import (
     aggregate_all_detection_dicts,
 )
-from topbrain25_eval.constants import TRACK
 from topbrain25_eval.for_gc_docker import is_docker, load_predictions_json
 from topbrain25_eval.utils.tree_view_dir import DisplayablePath
 
@@ -36,17 +35,13 @@ class MySegmentationEvaluation(ClassificationEvaluation):
 
     def __init__(
         self,
-        track: TRACK,
         expected_num_cases: int,
         predictions_path: Optional[PathLike] = None,
         ground_truth_path: Optional[PathLike] = None,
         output_path: Optional[PathLike] = None,
     ):
-        self.track = track
-
         self.execute_in_docker = is_docker()
 
-        print(f"[init] track = {self.track.value}")
         print(f"[init] execute_in_docker = {self.execute_in_docker}")
 
         if self.execute_in_docker:
@@ -122,10 +117,14 @@ class MySegmentationEvaluation(ClassificationEvaluation):
         assert num_ground_truth == num_input_pred, "unequal gt & pred"
 
         # slug for input interface (for gc docker)
-        self.slug_input = f"head-{self.track.value}-angiography"
+        # topbrain v2 input modality-agnostic
+        self.possible_input_slugs = (
+            "head-ct-angiography",
+            "head-mr-angiography",
+        )
 
         # set slug for outer interface (for gc docker)
-        self.slug_output = f"head-{self.track.value}-angio-segmentation"
+        self.slug_output = "extended-head-angio-segmentation"
 
         # set file_loader
         # NOTE: SimpleITKLoader is subclass of evalutils ImageLoader
@@ -187,7 +186,7 @@ class MySegmentationEvaluation(ClassificationEvaluation):
             # with the input filenames
             self.mapping_dict = load_predictions_json(
                 fname=self.predictions_json,
-                slug_input=self.slug_input,
+                possible_input_slugs=self.possible_input_slugs,
                 slug_output=self.slug_output,
                 input_dir=self._predictions_path,
             )
@@ -272,9 +271,9 @@ class MySegmentationEvaluation(ClassificationEvaluation):
         else:
             kwargs = {"left_index": True, "right_index": True}
 
-        assert self._ground_truth_cases.shape[0] == self._predictions_cases.shape[0], (
-            "different number of cases for gt, pred!"
-        )
+        assert (
+            self._ground_truth_cases.shape[0] == self._predictions_cases.shape[0]
+        ), "different number of cases for gt, pred!"
 
         # NOTE: indicator=True is crucial
         # otherwise cross_validate(self) will complain!
@@ -329,7 +328,7 @@ class MySegmentationEvaluation(ClassificationEvaluation):
         # metric-6 Average F1 score
         # detection_dict is under the column `all_detection_dicts`
         dect_avg = aggregate_all_detection_dicts(
-            self.track, self._case_results["all_detection_dicts"]
+            self._case_results["all_detection_dicts"]
         )
 
         # add the dection average dict to self._aggregate_results dict

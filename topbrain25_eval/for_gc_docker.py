@@ -13,6 +13,24 @@ from glob import glob
 from pathlib import Path
 
 
+def resolve_input_slug(job: dict, possible_slugs: tuple) -> str:
+    """
+    Get the slug of this job's single input, and confirm it's
+    one of the known slugs (ct or mr).
+    """
+    # topbrain is single modality input
+    # job["inputs"] is a list with one dict in it
+    slug = job["inputs"][0]["interface"]["slug"]
+
+    if slug not in possible_slugs:
+        raise ValueError(
+            f"Job {job.get('pk')} has unexpected input slug: {slug} "
+            f"(expected one of {possible_slugs})"
+        )
+
+    return slug
+
+
 def get_image_name(*, values: list[dict], slug: str) -> str:
     # This tells us the user-provided name of the input or output image
     for value in values:
@@ -50,6 +68,9 @@ def get_file_location(
     │               └── 40ee5b24-ec04-4153-b1ba-7e5bda52cbc3.mha
 
     CT is the same, just change to head-ct-angio-segmentation
+
+    NOTE: New in topbrain-v2, no modality track, unified to one location
+    /output/images/extended-head-angio-segmentation
     """
     # Where a job's output file will be located in the evaluation container
     relative_path = get_interface_relative_path(values=values, slug=slug)
@@ -57,7 +78,7 @@ def get_file_location(
 
 
 def load_predictions_json(
-    fname: Path, slug_input: str, slug_output: str, input_dir: Path
+    fname: Path, possible_input_slugs: tuple, slug_output: str, input_dir: Path
 ) -> dict:
     """
     "predictions.json" contains the location of the submitted algorithm's
@@ -96,6 +117,11 @@ def load_predictions_json(
         raise TypeError(f"entries of type float for file: {fname}")
 
     for job in entries:
+        print("============================================")
+        # NEW in topbrain v2: resolve per-job input slug
+        slug_input = resolve_input_slug(job, possible_input_slugs)
+        print("** slug_input = ", slug_input)
+
         # retrieve the image name from input interface to
         # match it with an image in your ground truth
         name = get_image_name(
@@ -122,10 +148,11 @@ def load_predictions_json(
             slug=slug_output,
             input_dir=input_dir,
         )
+        print("**** location = ", location)
         # read the singular result from location
         result = glob(str(location / "*.mha"))[0]
 
-        print("*** result = ", result)
+        print("***** result = ", result)
 
         cases[str(result)] = name
 

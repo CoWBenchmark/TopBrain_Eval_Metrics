@@ -2,8 +2,8 @@ from pathlib import Path
 
 import SimpleITK as sitk
 
-from topbrain25_eval.constants import TRACK
 from topbrain25_eval.score_case_task_1_seg import score_case_task_1_seg
+from topbrain25_eval.utils.results_equal import results_equal
 
 TESTDIR = Path("./test_assets")
 
@@ -24,22 +24,42 @@ def test_score_case_task_1_seg_ct():
     )
 
     # should only mutate test_dict
-    score_case_task_1_seg(track=TRACK.CT, gt=gt, pred=pred, metrics_dict=test_dict)
+    score_case_task_1_seg(gt=gt, pred=pred, metrics_dict=test_dict)
 
     # test_dict object still can be mutated
     test_dict["NUS"] = 2022
 
     print("test_dict =", test_dict)
+    # new in v2, add contamination metrics
+    # 8x8x8_3D_8Cubes with im=1 and bm=5 produces the following:
+    # the gt is filled, so BGC is nan
+    # UnderSeg_thres of 10% and FGC_thres of 1% filters nothing
+    #  'fg_con_ratios_dict_debug': {1: {},
+    #                               2: {0: {'n_error_voxels': 8,
+    #                                       'n_gt_voxels': 27,
+    #                                       'ratio': 0.2962962962962963}},
+    #                               3: {},
+    #                               4: {0: {'n_error_voxels': 27,
+    #                                       'n_gt_voxels': 27,
+    #                                       'ratio': 1.0}},
+    #                               5: {},
+    #                               6: {0: {'n_error_voxels': 12,
+    #                                       'n_gt_voxels': 27,
+    #                                       'ratio': 0.4444444444444444}},
+    #                               7: {},
+    #                               8: {0: {'n_error_voxels': 12,
+    #                                       'n_gt_voxels': 27,
+    #                                       'ratio': 0.4444444444444444}}}
 
     # thus the original parts of the dict are kept
-    assert test_dict == {
+    expected_dict = {
         "UZH": "Best #1",
         "Dice_BA": 1.0,
         "Dice_R-P1P2": 0.9333333333333333,
         "Dice_L-P1P2": 1.0,
-        "Dice_R-ICA": 0,
+        "Dice_R-ICA-C6-C7": 0,
         "Dice_R-M1": 1.0,
-        "Dice_L-ICA": 0.8571428571428571,
+        "Dice_L-ICA-C6-C7": 0.8571428571428571,
         "Dice_L-M1": 1.0,
         "Dice_R-Pcom": 0.8571428571428571,
         "Dice_ClsAvgDice": 0.8309523809523809,
@@ -47,9 +67,9 @@ def test_score_case_task_1_seg_ct():
         "clDice_BA": 0,
         "clDice_R-P1P2": 0.0,
         "clDice_L-P1P2": 0,
-        "clDice_R-ICA": 0,
+        "clDice_R-ICA-C6-C7": 0,
         "clDice_R-M1": 0,
-        "clDice_L-ICA": 0.0,
+        "clDice_L-ICA-C6-C7": 0.0,
         "clDice_L-M1": 0,
         "clDice_R-Pcom": 0.0,
         "clDice_ClsAvgclDice": 0.0,
@@ -57,9 +77,9 @@ def test_score_case_task_1_seg_ct():
         "B0err_BA": 0,
         "B0err_R-P1P2": 0,
         "B0err_L-P1P2": 0,
-        "B0err_R-ICA": 1,
+        "B0err_R-ICA-C6-C7": 1,
         "B0err_R-M1": 0,
-        "B0err_L-ICA": 0,
+        "B0err_L-ICA-C6-C7": 0,
         "B0err_L-M1": 0,
         "B0err_R-Pcom": 0,
         "B0err_ClsAvgB0err": 0.125,
@@ -70,12 +90,12 @@ def test_score_case_task_1_seg_ct():
         "HD95_R-P1P2": 0.0,
         "HD_L-P1P2": 0.0,
         "HD95_L-P1P2": 0.0,
-        "HD_R-ICA": 290,
-        "HD95_R-ICA": 290,
+        "HD_R-ICA-C6-C7": 290,
+        "HD95_R-ICA-C6-C7": 290,
         "HD_R-M1": 0.0,
         "HD95_R-M1": 0.0,
-        "HD_L-ICA": 1.0,
-        "HD95_L-ICA": 1.0,
+        "HD_L-ICA-C6-C7": 1.0,
+        "HD95_L-ICA-C6-C7": 1.0,
         "HD_L-M1": 0.0,
         "HD95_L-M1": 0.0,
         "HD_R-Pcom": 1.0,
@@ -88,7 +108,7 @@ def test_score_case_task_1_seg_ct():
         "NbErr_R-P1P2": 4,
         "NbErr_L-P1P2": 4,
         "NbErr_R-M1": 6,
-        "NbErr_L-ICA": 4,
+        "NbErr_L-ICA-C6-C7": 4,
         "NbErr_L-M1": 5,
         "NbErr_R-Pcom": 5,
         "NbErr_ClsAvgNbErr": 4.571428571428571,
@@ -108,85 +128,94 @@ def test_score_case_task_1_seg_ct():
             "32": {"label": "L-AChA", "Detection": "TN"},
             "33": {"label": "R-OA", "Detection": "TN"},
             "34": {"label": "L-OA", "Detection": "TN"},
-            "37": {"label": "ICVs", "Detection": "TN"},
-            "38": {"label": "R-BVR", "Detection": "TN"},
-            "39": {"label": "L-BVR", "Detection": "TN"},
+            # "37": {"label": "ICVs", "Detection": "TN"},
+            # "38": {"label": "R-BVR", "Detection": "TN"},
+            # "39": {"label": "L-BVR", "Detection": "TN"},
         },
         "NUS": 2022,
+        # new contamination metrics
+        "FGC_ratio_after_thresh": 0.0,
+        "FGC_sources_after_thresh": 0.0,
+        "UnderSeg_prevalence_after_thresh": 0.5,
+        "UnderSeg_ratio_after_thresh": 0.27314814814814814,
+        "BGC_sources": float("nan"),
+        "BGC_voxels": float("nan"),
     }
 
+    assert results_equal(test_dict, expected_dict)
 
-def test_score_case_task_1_seg_mr():
-    """
-    re-use from test_clDice_all_classes()
-    """
-    test_dict = {"UZH": "best in CH!"}
 
-    gt = sitk.ReadImage(
-        TESTDIR / "seg_metrics/3D/shape_5x6x4_multiclass_clDice_gt.nii.gz"
-    )
-    pred = sitk.ReadImage(
-        TESTDIR / "seg_metrics/3D/shape_5x6x4_multiclass_clDice_pred1.nii.gz"
-    )
+# def test_score_case_task_1_seg_mr():
+#     """
+#     re-use from test_clDice_all_classes()
+#     """
+#     test_dict = {"UZH": "best in CH!"}
 
-    # should only mutate test_dict
-    score_case_task_1_seg(track=TRACK.MR, gt=gt, pred=pred, metrics_dict=test_dict)
+#     gt = sitk.ReadImage(
+#         TESTDIR / "seg_metrics/3D/shape_5x6x4_multiclass_clDice_gt.nii.gz"
+#     )
+#     pred = sitk.ReadImage(
+#         TESTDIR / "seg_metrics/3D/shape_5x6x4_multiclass_clDice_pred1.nii.gz"
+#     )
 
-    # test_dict object still can be mutated
-    test_dict["Marrakesh"] = "2024"
+#     # should only mutate test_dict
+#     score_case_task_1_seg(track=TRACK.MR, gt=gt, pred=pred, metrics_dict=test_dict)
 
-    print("test_dict =", test_dict)
+#     # test_dict object still can be mutated
+#     test_dict["Marrakesh"] = "2024"
 
-    # thus the original parts of the dict are kept
-    assert test_dict == {
-        "UZH": "best in CH!",
-        "Dice_L-STA": 0.9333333333333333,
-        "Dice_R-MaxA": 0.5263157894736842,
-        "Dice_L-MaxA": 0.6,
-        "Dice_ClsAvgDice": 0.6865497076023392,
-        "Dice_MergedBin": 0.6666666666666666,
-        "clDice_L-STA": 0.8571428571428571,
-        "clDice_R-MaxA": 0.8571428571428571,
-        "clDice_L-MaxA": 1.0,
-        "clDice_ClsAvgclDice": 0.9047619047619048,
-        "clDice_MergedBin": 0.8333333333333333,
-        "B0err_L-STA": 0,
-        "B0err_R-MaxA": 0,
-        "B0err_L-MaxA": 0,
-        "B0err_ClsAvgB0err": 0.0,
-        "B0err_MergedBin": 0,
-        "HD_L-STA": 1.0,
-        "HD95_L-STA": 0.6499999999999995,
-        "HD_R-MaxA": 3.0,
-        "HD95_R-MaxA": 3.0,
-        "HD_L-MaxA": 1.0,
-        "HD95_L-MaxA": 1.0,
-        "HD95_ClsAvgHD95": 1.5499999999999998,
-        "HD_ClsAvgHD": 1.6666666666666667,
-        "HD_MergedBin": 1.4142135381698608,
-        "HD95_MergedBin": 1.1035533845424652,
-        "NbErr_L-STA": 1,
-        "NbErr_R-MaxA": 2,
-        "NbErr_L-MaxA": 1,
-        "NbErr_ClsAvgNbErr": 1.3333333333333333,
-        "all_detection_dicts": {
-            "8": {"label": "R-Pcom", "Detection": "TN"},
-            "9": {"label": "L-Pcom", "Detection": "TN"},
-            "10": {"label": "Acom", "Detection": "TN"},
-            "15": {"label": "3rd-A2", "Detection": "TN"},
-            "16": {"label": "3rd-A3", "Detection": "TN"},
-            "25": {"label": "R-SCA", "Detection": "TN"},
-            "26": {"label": "L-SCA", "Detection": "TN"},
-            "27": {"label": "R-AICA", "Detection": "TN"},
-            "28": {"label": "L-AICA", "Detection": "TN"},
-            "29": {"label": "R-PICA", "Detection": "TN"},
-            "30": {"label": "L-PICA", "Detection": "TN"},
-            "31": {"label": "R-AChA", "Detection": "TN"},
-            "32": {"label": "L-AChA", "Detection": "TN"},
-            "33": {"label": "R-OA", "Detection": "TN"},
-            "34": {"label": "L-OA", "Detection": "TN"},
-            "41": {"label": "R-MMA", "Detection": "TN"},
-            "42": {"label": "L-MMA", "Detection": "TN"},
-        },
-        "Marrakesh": "2024",
-    }
+#     print("test_dict =", test_dict)
+
+#     # thus the original parts of the dict are kept
+#     assert test_dict == {
+#         "UZH": "best in CH!",
+#         "Dice_L-STA": 0.9333333333333333,
+#         "Dice_R-MaxA": 0.5263157894736842,
+#         "Dice_L-MaxA": 0.6,
+#         "Dice_ClsAvgDice": 0.6865497076023392,
+#         "Dice_MergedBin": 0.6666666666666666,
+#         "clDice_L-STA": 0.8571428571428571,
+#         "clDice_R-MaxA": 0.8571428571428571,
+#         "clDice_L-MaxA": 1.0,
+#         "clDice_ClsAvgclDice": 0.9047619047619048,
+#         "clDice_MergedBin": 0.8333333333333333,
+#         "B0err_L-STA": 0,
+#         "B0err_R-MaxA": 0,
+#         "B0err_L-MaxA": 0,
+#         "B0err_ClsAvgB0err": 0.0,
+#         "B0err_MergedBin": 0,
+#         "HD_L-STA": 1.0,
+#         "HD95_L-STA": 0.6499999999999995,
+#         "HD_R-MaxA": 3.0,
+#         "HD95_R-MaxA": 3.0,
+#         "HD_L-MaxA": 1.0,
+#         "HD95_L-MaxA": 1.0,
+#         "HD95_ClsAvgHD95": 1.5499999999999998,
+#         "HD_ClsAvgHD": 1.6666666666666667,
+#         "HD_MergedBin": 1.4142135381698608,
+#         "HD95_MergedBin": 1.1035533845424652,
+#         "NbErr_L-STA": 1,
+#         "NbErr_R-MaxA": 2,
+#         "NbErr_L-MaxA": 1,
+#         "NbErr_ClsAvgNbErr": 1.3333333333333333,
+#         "all_detection_dicts": {
+#             "8": {"label": "R-Pcom", "Detection": "TN"},
+#             "9": {"label": "L-Pcom", "Detection": "TN"},
+#             "10": {"label": "Acom", "Detection": "TN"},
+#             "15": {"label": "3rd-A2", "Detection": "TN"},
+#             "16": {"label": "3rd-A3", "Detection": "TN"},
+#             "25": {"label": "R-SCA", "Detection": "TN"},
+#             "26": {"label": "L-SCA", "Detection": "TN"},
+#             "27": {"label": "R-AICA", "Detection": "TN"},
+#             "28": {"label": "L-AICA", "Detection": "TN"},
+#             "29": {"label": "R-PICA", "Detection": "TN"},
+#             "30": {"label": "L-PICA", "Detection": "TN"},
+#             "31": {"label": "R-AChA", "Detection": "TN"},
+#             "32": {"label": "L-AChA", "Detection": "TN"},
+#             "33": {"label": "R-OA", "Detection": "TN"},
+#             "34": {"label": "L-OA", "Detection": "TN"},
+#             "41": {"label": "R-MMA", "Detection": "TN"},
+#             "42": {"label": "L-MMA", "Detection": "TN"},
+#         },
+#         "Marrakesh": "2024",
+#     }

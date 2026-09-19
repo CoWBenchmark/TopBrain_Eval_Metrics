@@ -10,11 +10,8 @@ import SimpleITK as sitk
 from topbrain25_eval.constants import (
     DETECTION,
     IOU_THRESHOLD,
-    MUL_CLASS_LABEL_MAP_CT,
-    MUL_CLASS_LABEL_MAP_MR,
-    SIDEROAD_COMPONENT_LABELS_CT,
-    SIDEROAD_COMPONENT_LABELS_MR,
-    TRACK,
+    MUL_CLASS_LABEL_MAP,
+    SIDEROAD_COMPONENT_LABELS,
 )
 from topbrain25_eval.utils.utils_mask import extract_labels
 
@@ -118,9 +115,7 @@ def detection_single_label(*, gt: sitk.Image, pred: sitk.Image, label: int) -> s
     return detection
 
 
-def detection_sideroad_labels(
-    *, track: TRACK, gt: sitk.Image, pred: sitk.Image
-) -> dict:
+def detection_sideroad_labels(*, gt: sitk.Image, pred: sitk.Image) -> dict:
     """
     for "side road" vessel component labels
     regardless of presence in gt or pred,
@@ -140,13 +135,6 @@ def detection_sideroad_labels(
     """
     # print("\nDetection of Side Road Vessel Labels >>>")
 
-    if track == TRACK.CT:
-        component_labels = SIDEROAD_COMPONENT_LABELS_CT
-        label_map = MUL_CLASS_LABEL_MAP_CT
-    else:
-        component_labels = SIDEROAD_COMPONENT_LABELS_MR
-        label_map = MUL_CLASS_LABEL_MAP_MR
-
     # gt and pred should have the same shape
     assert gt.GetSize() == pred.GetSize(), "gt pred not matching shapes!"
 
@@ -156,14 +144,14 @@ def detection_sideroad_labels(
     detection_dict = {}
 
     # irregardless of presence, go through each side road vessel label
-    for label in component_labels:
+    for label in SIDEROAD_COMPONENT_LABELS:
         # print(f"\nSide road vessel label-{label}\n")
 
         detection = detection_single_label(gt=gt, pred=pred, label=label)
 
         # populate the detection result based on label's key
         detection_dict[str(label)] = {
-            "label": label_map[str(label)],
+            "label": MUL_CLASS_LABEL_MAP[str(label)],
             "Detection": detection,
         }
 
